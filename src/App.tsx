@@ -1,5 +1,6 @@
 import { createStore } from "solid-js/store";
 import { For, JSX } from "solid-js";
+import { RiftBound } from "../plugins/riftbound/riftbound"
 import {
   DragDropProvider,
   DragDropSensors,
@@ -8,15 +9,7 @@ import {
   createDroppable,
 } from "@thisbeyond/solid-dnd";
 import "./App.css";
-
-declare module "solid-js" {
-  namespace JSX {
-    interface Directives {
-      draggable: ReturnType<typeof createDraggable>;
-      droppable: ReturnType<typeof createDroppable>;
-    }
-  }
-}
+import { PlayArea } from "../plugins/base/description";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -43,7 +36,7 @@ const DropZone = (props: { id: string | number; children: JSX.Element }) => {
   const droppable = createDroppable(props.id);
   return (
     <div
-      use:droppable
+      use:droppable={droppable}
       class="h-full w-full transition-colors"
       classList={{ "bg-green-100 ring-2 ring-green-400": droppable.isActiveDroppable }}
     >
@@ -57,7 +50,7 @@ const Card = (props: { id: number; name: string }) => {
   const draggable = createDraggable(props.id);
   return (
     <div
-      use:draggable
+      use:draggable={draggable}
       class="cursor-grab active:cursor-grabbing select-none rounded border border-blue-400 bg-blue-100 px-3 py-1 text-sm shadow"
       classList={{ "opacity-50": draggable.isActiveDraggable }}
     >
@@ -69,11 +62,8 @@ const Card = (props: { id: number; name: string }) => {
 // ── App ──────────────────────────────────────────────────────────────────────
 
 function App() {
-  const [panels] = createStore<Panel[]>([
-    { id: "battlefield", colStart: 1, colEnd: 13, rowStart: 1, rowEnd: 7  },
-    { id: "base",        colStart: 1, colEnd: 7,  rowStart: 7, rowEnd: 13 },
-    { id: "hand",        colStart: 7, colEnd: 13, rowStart: 7, rowEnd: 13 },
-  ]);
+  const riftbound = new RiftBound();
+  const [panels] = createStore<PlayArea[]>(riftbound.playAreas);
 
   const [cards, setCards] = createStore<CardData[]>([
     { id: 1, name: "Fireball",   zone: "hand" },
@@ -96,7 +86,7 @@ function App() {
    * Panels that want drag/drop wrap with <DropZone> or render <Card>s.
    * Panels that don't (e.g. "base") just return plain content.
    */
-  const panelContent: Record<PanelId, () => JSX.Element> = {
+  const panelContent: Record<string, () => JSX.Element> = {
     battlefield: () => (
       <DropZone id="battlefield">
         <div class="flex h-full flex-col gap-2 p-2">
@@ -142,8 +132,8 @@ function App() {
               <div
                 class="border-2 border-red-500"
                 style={{
-                  "grid-column": `${panel.colStart} / ${panel.colEnd}`,
-                  "grid-row": `${panel.rowStart} / ${panel.rowEnd}`,
+                  "grid-column": `${panel.region.yStart} / ${panel.region.yFinish}`,
+                  "grid-row": `${panel.region.xStart} / ${panel.region.xFinish}`,
                 }}
               >
                 {panelContent[panel.id]?.()}
