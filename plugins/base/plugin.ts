@@ -2,6 +2,7 @@ import { JSX } from "solid-js";
 import { DragEventHandler } from "@thisbeyond/solid-dnd";
 
 export interface Plugin {
+  id: string;
   playAreas: PlayArea[]
   register: () => void;
   onDragEnd: DragEventHandler
@@ -10,7 +11,7 @@ export interface Plugin {
 export interface PlayArea {
   id: string;
   region: Region;
-  content?: () => JSX.Element;
+  content: () => JSX.Element;
   description?: string;
 }
 

@@ -48,14 +48,8 @@ export const Card = (props: { id: number; name: string }) => {
 
 function App() {
   const plugins: Plugin[] = Plugins;
-  const riftBound: Plugin = plugins[0];
+  const riftBound: Plugin = plugins.filter(s => s.id === "riftbound")[0];
   const [panels] = createStore<PlayArea[]>(riftBound.playAreas);
-
-  const [cards, setCards] = createStore<CardData[]>([
-    { id: 1, name: "Fireball",   zone: "hand" },
-    { id: 2, name: "Shield",     zone: "hand" },
-    { id: 3, name: "Lightning",  zone: "hand" },
-  ]);
 
   return (
     <DragDropProvider onDragEnd={riftBound.onDragEnd}>
@@ -67,11 +61,11 @@ function App() {
               <div
                 class="border-2 border-red-500"
                 style={{
-                  "grid-column": `${panel.region.yStart} / ${panel.region.yFinish}`,
-                  "grid-row": `${panel.region.xStart} / ${panel.region.xFinish}`,
+                  "grid-column": `${panel.region.xStart} / ${panel.region.xFinish}`,
+                  "grid-row": `${panel.region.yStart} / ${panel.region.yFinish}`,
                 }}
               >
-                {panel!.content!()}
+                {panel.content()}
               </div>
             )}
           </For>
