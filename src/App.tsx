@@ -38,6 +38,7 @@ export const Card = (props: { id: number; name: string }) => {
       use:draggable={draggable}
       class="cursor-grab active:cursor-grabbing select-none rounded border border-blue-400 bg-blue-100 px-3 py-1 text-sm shadow"
       classList={{ "opacity-50": draggable.isActiveDraggable }}
+      style={{ "touch-action": "none" }}
     >
       {props.name}
     </div>
