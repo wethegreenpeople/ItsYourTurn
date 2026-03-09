@@ -1,9 +1,10 @@
 import { Plugin, PlayArea } from "../base/plugin";
 import { registerPlugin } from "../store";
-import { DropZone, Card } from "../../src/App";
+import { DropZone } from "../../src/App";
 import { For } from "solid-js";
 import { createStore } from "solid-js/store";
 import { DragEventHandler } from "@thisbeyond/solid-dnd";
+import { Card } from "../../src/components/card";
 
 type CardData = { id: number; name: string; zone: string };
 export class RiftBound implements Plugin {
@@ -159,9 +160,9 @@ export class RiftBound implements Plugin {
 
   constructor() {
     const [cards, setCards] = createStore<CardData[]>([
-      { id: 1, name: "Fireball",   zone: "hand" },
-      { id: 2, name: "Shield",     zone: "hand" },
-      { id: 3, name: "Lightning",  zone: "hand" },
+      { id: 1, name: "Draven",   zone: "hand" },
+      { id: 2, name: "Yasuo",     zone: "hand" },
+      { id: 3, name: "Ahri",  zone: "hand" },
     ]);
     this.cards = cards;
     this.setCards = setCards;

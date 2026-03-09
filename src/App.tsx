@@ -3,19 +3,11 @@ import { For, JSX } from "solid-js";
 import {
   DragDropProvider,
   DragDropSensors,
-  DragEventHandler,
-  createDraggable,
   createDroppable,
 } from "@thisbeyond/solid-dnd";
 import { Plugin, PlayArea } from "../plugins/base/plugin";
 import { Plugins } from "../plugins/store";
 import "./App.css";
-
-type CardData = {
-  id: number;
-  name: string;
-  zone: string;
-};
 
 export const DropZone = (props: { id: string; children: JSX.Element }) => {
   const droppable = createDroppable(props.id);
@@ -29,23 +21,6 @@ export const DropZone = (props: { id: string; children: JSX.Element }) => {
     </div>
   );
 };
-
-/** A draggable card. Only rendered where card items live. */
-export const Card = (props: { id: number; name: string }) => {
-  const draggable = createDraggable(props.id);
-  return (
-    <div
-      use:draggable={draggable}
-      class="cursor-grab active:cursor-grabbing select-none rounded border border-blue-400 bg-blue-100 px-3 py-1 text-sm shadow"
-      classList={{ "opacity-50": draggable.isActiveDraggable }}
-      style={{ "touch-action": "none" }}
-    >
-      {props.name}
-    </div>
-  );
-};
-
-// ── App ──────────────────────────────────────────────────────────────────────
 
 function App() {
   const plugins: Plugin[] = Plugins;
