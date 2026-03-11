@@ -1,15 +1,31 @@
 import { Plugin, PlayArea } from "../base/plugin";
-import { registerPlugin } from "../store";
 import { DropZone } from "../../src/App";
 import { For } from "solid-js";
-import { createStore } from "solid-js/store";
 import { DragEventHandler } from "@thisbeyond/solid-dnd";
 import { CardComponent } from "../../src/components/card";
+import { cardsInDeck, getDeck, moveCard, registerDeck } from "../../src/stores/deckStore";
+import { Deck } from "../../src/models/Deck";
+import { Card } from "../../src/models/Card";
+import { registerPlugin } from "../../src/stores/pluginStore";
 
 export class RiftBound implements Plugin {
+  public id: string = "riftbound";
+
   register(): void {
     registerPlugin(this);
+
+    const hand = new Deck("hand");
+    registerDeck(hand);
+    registerDeck(new Deck("battlefield"));
+    registerDeck(new Deck("UnplayedRunes"));
+    registerDeck(new Deck("PlayedRunes"));
+    registerDeck(new Deck("mainDeck"));
+
+    hand.addCard(new Card("Draven"));
+    hand.addCard(new Card("Yasuo"));
+    hand.addCard(new Card("Ahri"));
   }
+
   playAreas: PlayArea[] = [
     {
       id: "battlefield",
@@ -24,27 +40,7 @@ export class RiftBound implements Plugin {
           <div class="flex h-full flex-col gap-2 p-2">
             <p class="text-xs text-gray-400">Battlefield</p>
             <div class="flex flex-wrap gap-2">
-              <For each={this.cardsIn("battlefield")}>
-                {(card) => <CardComponent id={card.id} name={card.name} />}
-              </For>
-            </div>
-          </div>
-        </DropZone>
-      )
-    },
-    {
-      id: "fff",
-      region: {
-        xStart: 6,
-        xFinish: 8,
-        yStart: 1,
-        yFinish: 2
-      },
-      content: () => (
-        <DropZone id="fff">
-          <div class="flex h-full flex-col gap-2 p-2">
-            <div class="flex flex-wrap gap-2">
-              <For each={this.cardsIn("fff")}>
+              <For each={cardsInDeck("battlefield")}>
                 {(card) => <CardComponent card={card} />}
               </For>
             </div>
@@ -68,7 +64,7 @@ export class RiftBound implements Plugin {
       )
     },
     {
-      id: "runeDeck",
+      id: "UnplayedRunes",
       region: {
         xStart: 1,
         xFinish: 2,
@@ -76,11 +72,11 @@ export class RiftBound implements Plugin {
         yFinish: 9
       },
       content: () => (
-        <DropZone id="runeDeck">
+        <DropZone id="UnplayedRunes">
           <div class="flex h-full flex-col gap-2 p-2">
             <p class="text-xs text-gray-400">Rune Deck</p>
             <div class="flex flex-wrap gap-2">
-              <For each={this.cardsIn("runeDeck")}>
+              <For each={cardsInDeck("UnplayedRunes")}>
                 {(card) => <CardComponent card={card} />}
               </For>
             </div>
@@ -89,7 +85,7 @@ export class RiftBound implements Plugin {
       )
     },
     {
-      id: "runes",
+      id: "PlayedRunes",
       region: {
         xStart: 2,
         xFinish: 12,
@@ -97,11 +93,11 @@ export class RiftBound implements Plugin {
         yFinish: 9
       },
       content: () => (
-        <DropZone id="runes">
+        <DropZone id="PlayedRunes">
           <div class="flex h-full flex-col gap-2 p-2">
             <p class="text-xs text-gray-400">Runes</p>
             <div class="flex flex-wrap gap-2">
-              <For each={this.cardsIn("runes")}>
+              <For each={cardsInDeck("PlayedRunes")}>
                 {(card) => <CardComponent card={card} />}
               </For>
             </div>
@@ -122,39 +118,19 @@ export class RiftBound implements Plugin {
           <div class="flex h-full flex-col gap-2 p-2">
             <p class="text-xs text-gray-400">Deck</p>
             <div class="flex flex-wrap gap-2">
-              <For each={this.cardsIn("mainDeck")}>
-                {(card) => <CardComponent id={card.id} name={card.name} />}
+              <For each={cardsInDeck("mainDeck")}>
+                {(card) => <CardComponent card={card} />}
               </For>
             </div>
           </div>
         </DropZone>
       )
     }
-  ]
-
-  private cards: CardData[];
-  private setCards: ReturnType<typeof createStore<CardData[]>>[1];
-  public id: string = "riftbound";
-
-  constructor() {
-    const [cards, setCards] = createStore<CardData[]>([
-      { id: 1, name: "Draven",   zone: "hand" },
-      { id: 2, name: "Yasuo",     zone: "hand" },
-      { id: 3, name: "Ahri",  zone: "hand" },
-    ]);
-    this.cards = cards;
-    this.setCards = setCards;
-  }
-
-  private cardsIn(zone: string): CardData[] {
-    return this.cards.filter((c) => c.zone === zone);
-  }
+  ];
 
   onDragEnd: DragEventHandler = ({ draggable, droppable }) => {
     if (draggable && droppable) {
-      const cardId = draggable.id as number;
-      const targetZone = droppable.id as string;
-      this.setCards((c) => c.id === cardId, "zone", targetZone);
+      moveCard(draggable.id as string, droppable.id as string);
     }
   };
 }

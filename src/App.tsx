@@ -6,10 +6,10 @@ import {
   createDroppable,
 } from "@thisbeyond/solid-dnd";
 import { Plugin, PlayArea } from "../plugins/base/plugin";
-import { Plugins } from "../plugins/store";
 import "./App.css";
-import { hand } from "./stores/cards/hand";
 import { CardComponent } from "./components/card";
+import { Plugins } from "./stores/pluginStore";
+import { cardsInDeck } from "./stores/deckStore";
 
 export const DropZone = (props: { id: string; children: JSX.Element }) => {
   const droppable = createDroppable(props.id);
@@ -55,7 +55,7 @@ function App() {
             <div class="flex h-full flex-col gap-2 p-2">
               <p class="text-xs text-gray-400">Hand</p>
               <div class="flex flex-wrap gap-2">
-                <For each={hand}>
+                <For each={cardsInDeck("hand")}>
                   {(card) => <CardComponent card={card} />}
                 </For>
               </div>

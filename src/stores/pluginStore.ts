@@ -1,4 +1,4 @@
-import { Plugin } from "./base/plugin";
+import { Plugin } from "../../plugins/base/plugin"
 
 export const Plugins: Plugin[] = [];
 
