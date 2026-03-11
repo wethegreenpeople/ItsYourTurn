@@ -1,8 +1,9 @@
 import { createDraggable } from "@thisbeyond/solid-dnd";
 import { createSignal } from "solid-js";
+import { Card } from "../models/Card";
 
-export const Card = (props: { id: number; name: string }) => {
-  const draggable = createDraggable(props.id);
+export const CardComponent = (props: { card: Card }) => {
+  const draggable = createDraggable(props.card.id);
   const [rotated, setRotated] = createSignal(false);
   return (
     <div
@@ -14,7 +15,7 @@ export const Card = (props: { id: number; name: string }) => {
     >
       <div class="flex flex-col">
         <div class="flex flex-row bg-gray-600 place-content-center text-white">
-          {props.name}
+          {props.card.name}
         </div>
       </div>
     </div>

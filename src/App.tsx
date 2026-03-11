@@ -8,6 +8,8 @@ import {
 import { Plugin, PlayArea } from "../plugins/base/plugin";
 import { Plugins } from "../plugins/store";
 import "./App.css";
+import { hand } from "./stores/cards/hand";
+import { CardComponent } from "./components/card";
 
 export const DropZone = (props: { id: string; children: JSX.Element }) => {
   const droppable = createDroppable(props.id);
@@ -31,20 +33,34 @@ function App() {
     <DragDropProvider onDragEnd={riftBound.onDragEnd}>
       <DragDropSensors />
       <main class="container h-screen p-4">
-        <div class="grid h-full w-full grid-cols-12 grid-rows-12 gap-2 border-2 border-black">
-          <For each={panels}>
-            {(panel) => (
-              <div
-                class="border-2 border-red-500"
-                style={{
-                  "grid-column": `${panel.region.xStart} / ${panel.region.xFinish}`,
-                  "grid-row": `${panel.region.yStart} / ${panel.region.yFinish}`,
-                }}
-              >
-                {panel.content()}
+        <div class="flex flex-col" id="playArea">
+          <div class="grid h-full w-full grid-cols-12 grid-rows-12 gap-2 border-2 border-black">
+            <For each={panels}>
+              {(panel) => (
+                <div
+                  class="border-2 border-red-500"
+                  style={{
+                    "grid-column": `${panel.region.xStart} / ${panel.region.xFinish}`,
+                    "grid-row": `${panel.region.yStart} / ${panel.region.yFinish}`,
+                  }}
+                >
+                  {panel.content()}
+                </div>
+              )}
+            </For>
+          </div>
+        </div>
+        <div class="flex flex-row" id="hand">
+          <DropZone id="hand">
+            <div class="flex h-full flex-col gap-2 p-2">
+              <p class="text-xs text-gray-400">Hand</p>
+              <div class="flex flex-wrap gap-2">
+                <For each={hand}>
+                  {(card) => <CardComponent card={card} />}
+                </For>
               </div>
-            )}
-          </For>
+            </div>
+          </DropZone>
         </div>
       </main>
     </DragDropProvider>

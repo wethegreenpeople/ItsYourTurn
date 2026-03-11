@@ -4,9 +4,8 @@ import { DropZone } from "../../src/App";
 import { For } from "solid-js";
 import { createStore } from "solid-js/store";
 import { DragEventHandler } from "@thisbeyond/solid-dnd";
-import { Card } from "../../src/components/card";
+import { CardComponent } from "../../src/components/card";
 
-type CardData = { id: number; name: string; zone: string };
 export class RiftBound implements Plugin {
   register(): void {
     registerPlugin(this);
@@ -26,7 +25,7 @@ export class RiftBound implements Plugin {
             <p class="text-xs text-gray-400">Battlefield</p>
             <div class="flex flex-wrap gap-2">
               <For each={this.cardsIn("battlefield")}>
-                {(card) => <Card id={card.id} name={card.name} />}
+                {(card) => <CardComponent id={card.id} name={card.name} />}
               </For>
             </div>
           </div>
@@ -46,7 +45,7 @@ export class RiftBound implements Plugin {
           <div class="flex h-full flex-col gap-2 p-2">
             <div class="flex flex-wrap gap-2">
               <For each={this.cardsIn("fff")}>
-                {(card) => <Card id={card.id} name={card.name} />}
+                {(card) => <CardComponent card={card} />}
               </For>
             </div>
           </div>
@@ -82,7 +81,7 @@ export class RiftBound implements Plugin {
             <p class="text-xs text-gray-400">Rune Deck</p>
             <div class="flex flex-wrap gap-2">
               <For each={this.cardsIn("runeDeck")}>
-                {(card) => <Card id={card.id} name={card.name} />}
+                {(card) => <CardComponent card={card} />}
               </For>
             </div>
           </div>
@@ -103,7 +102,7 @@ export class RiftBound implements Plugin {
             <p class="text-xs text-gray-400">Runes</p>
             <div class="flex flex-wrap gap-2">
               <For each={this.cardsIn("runes")}>
-                {(card) => <Card id={card.id} name={card.name} />}
+                {(card) => <CardComponent card={card} />}
               </For>
             </div>
           </div>
@@ -124,28 +123,7 @@ export class RiftBound implements Plugin {
             <p class="text-xs text-gray-400">Deck</p>
             <div class="flex flex-wrap gap-2">
               <For each={this.cardsIn("mainDeck")}>
-                {(card) => <Card id={card.id} name={card.name} />}
-              </For>
-            </div>
-          </div>
-        </DropZone>
-      )
-    },
-    {
-      id: "hand",
-      region: {
-        xStart: 1,
-        xFinish: 13,
-        yStart: 10,
-        yFinish: 13
-      },
-      content: () => (
-        <DropZone id="hand">
-          <div class="flex h-full flex-col gap-2 p-2">
-            <p class="text-xs text-gray-400">Hand</p>
-            <div class="flex flex-wrap gap-2">
-              <For each={this.cardsIn("hand")}>
-                {(card) => <Card id={card.id} name={card.name} />}
+                {(card) => <CardComponent id={card.id} name={card.name} />}
               </For>
             </div>
           </div>
