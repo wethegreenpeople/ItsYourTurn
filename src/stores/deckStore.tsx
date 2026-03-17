@@ -17,11 +17,24 @@ export function cardsInDeck(deckId: string): Card[] {
   return getDeck(deckId)?.cards ?? [];
 }
 
+export function findDeckForCard(cardId: string): Deck | undefined {
+  return Decks.find((d) => d.cards.some((c) => c.id === cardId));
+}
+
 export function moveCard(cardId: string, targetDeckId: string) {
-  const sourceDeck = Decks.find((d) => d.cards.some((c) => c.id === cardId));
+  const sourceDeck = findDeckForCard(cardId);
   const targetDeck = getDeck(targetDeckId);
   if (sourceDeck && targetDeck) {
     const card = sourceDeck.removeCard(cardId);
     if (card) targetDeck.addCard(card);
+  }
+}
+
+export function moveCardAt(cardId: string, targetDeckId: string, beforeCardId?: string) {
+  const sourceDeck = findDeckForCard(cardId);
+  const targetDeck = getDeck(targetDeckId);
+  if (sourceDeck && targetDeck) {
+    const card = sourceDeck.removeCard(cardId);
+    if (card) targetDeck.insertCard(card, beforeCardId);
   }
 }

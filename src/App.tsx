@@ -1,23 +1,27 @@
 import { createStore } from "solid-js/store";
-import { For, JSX } from "solid-js";
+import { For, JSX, Show } from "solid-js";
 import {
   DragDropProvider,
   DragDropSensors,
+  DragOverlay,
+  SortableProvider,
   createDroppable,
 } from "@thisbeyond/solid-dnd";
 import { Plugin, PlayArea } from "../plugins/base/plugin";
 import "./App.css";
-import { CardComponent } from "./components/card";
+import { CardComponent, CardVisual } from "./components/card";
+import { Card } from "./models/Card";
 import { Plugins } from "./stores/pluginStore";
 import { cardsInDeck } from "./stores/deckStore";
+import { GameHeader } from "./components/GameHeader";
 
 export const DropZone = (props: { id: string; children: JSX.Element }) => {
   const droppable = createDroppable(props.id);
   return (
     <div
       use:droppable={droppable}
-      class="h-full w-full transition-colors"
-      classList={{ "bg-green-100 ring-2 ring-green-400": droppable.isActiveDroppable }}
+      class="h-full w-full transition-all duration-200"
+      classList={{ "zone-drop-active": droppable.isActiveDroppable }}
     >
       {props.children}
     </div>
@@ -26,22 +30,43 @@ export const DropZone = (props: { id: string; children: JSX.Element }) => {
 
 function App() {
   const plugins: Plugin[] = Plugins;
-  const riftBound: Plugin = plugins.filter(s => s.id === "riftbound")[0];
-  const [panels] = createStore<PlayArea[]>(riftBound.playAreas);
+  const plugin: Plugin = plugins.filter(s => s.id === "riftbound")[0];
+  const [panels] = createStore<PlayArea[]>(plugin.playAreas);
+
+  const t = plugin.theme ?? {};
+  const themeVars = {
+    "--plugin-accent":       t.accentColor        ?? "#c9a84c",
+    "--plugin-accent-dim":   t.accentDim          ?? "#7a6030",
+    "--plugin-surface":      t.surfaceColor       ?? "rgba(30,34,54,0.95)",
+    "--plugin-border":       t.borderColor        ?? "#3a3d54",
+    "--plugin-text":         t.textColor          ?? "#e2d9c7",
+    "--plugin-text-muted":   t.textMuted          ?? "#c5c3d8",
+    "--plugin-font-display": t.fontDisplay        ?? "'Cinzel', Georgia, serif",
+    "--plugin-font-body":    t.fontBody           ?? "'Rajdhani', system-ui, sans-serif",
+    "--plugin-grid-cols":    t.gridColumnsTemplate ?? "repeat(12, 1fr)",
+  };
 
   return (
-    <DragDropProvider onDragEnd={riftBound.onDragEnd}>
+    <DragDropProvider onDragEnd={plugin.onDragEnd}>
       <DragDropSensors />
-      <main class="container h-screen p-4">
-        <div class="flex flex-col" id="playArea">
-          <div class="grid h-full w-full grid-cols-12 grid-rows-12 gap-2 border-2 border-black">
+      <DragOverlay>
+        {(draggable) => (
+          <Show when={draggable}>
+            <CardVisual card={draggable!.data.card as Card} />
+          </Show>
+        )}
+      </DragOverlay>
+      <main class="game-root" style={themeVars}>
+        <GameHeader />
+        <div class="game-board">
+          <div class="game-grid">
             <For each={panels}>
               {(panel) => (
                 <div
-                  class="border-2 border-red-500"
+                  class={`zone-panel${panel.className ? ` ${panel.className}` : ''}`}
                   style={{
                     "grid-column": `${panel.region.xStart} / ${panel.region.xFinish}`,
-                    "grid-row": `${panel.region.yStart} / ${panel.region.yFinish}`,
+                    "grid-row":    `${panel.region.yStart} / ${panel.region.yFinish}`,
                   }}
                 >
                   {panel.content()}
@@ -50,14 +75,16 @@ function App() {
             </For>
           </div>
         </div>
-        <div class="flex flex-row" id="hand">
+        <div class="hand-dock">
           <DropZone id="hand">
-            <div class="flex h-full flex-col gap-2 p-2">
-              <p class="text-xs text-gray-400">Hand</p>
-              <div class="flex flex-wrap gap-2">
-                <For each={cardsInDeck("hand")}>
-                  {(card) => <CardComponent card={card} />}
-                </For>
+            <div class="hand-inner">
+              <span class="zone-label">Hand</span>
+              <div class="hand-cards">
+                <SortableProvider ids={cardsInDeck("hand").map(c => c.id)}>
+                  <For each={cardsInDeck("hand")}>
+                    {(card) => <CardComponent card={card} zoneId="hand" />}
+                  </For>
+                </SortableProvider>
               </div>
             </div>
           </DropZone>

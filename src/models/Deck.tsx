@@ -24,4 +24,19 @@ export class Deck {
     }
     return card;
   }
+
+  insertCard(card: Card, beforeId?: string) {
+    if (!beforeId) {
+      this.addCard(card);
+      return;
+    }
+    const idx = this.cards.findIndex(c => c.id === beforeId);
+    if (idx === -1) {
+      this.addCard(card);
+    } else {
+      const next = [...this.cards];
+      next.splice(idx, 0, card);
+      this.setCards(next);
+    }
+  }
 }
