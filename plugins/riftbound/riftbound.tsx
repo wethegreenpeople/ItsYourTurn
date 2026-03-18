@@ -1,17 +1,86 @@
-import { Plugin, PlayArea } from "../base/plugin";
+import { Plugin, PlayArea, CardAction } from "../base/plugin";
 import type { PluginTheme } from "../base/plugin";
 import { DropZone } from "../../src/App";
-import { For } from "solid-js";
+import { For, Show } from "solid-js";
 import { DragEventHandler } from "@thisbeyond/solid-dnd";
 import { SortableProvider } from "@thisbeyond/solid-dnd";
 import { CardComponent } from "../../src/components/card";
-import { cardsInDeck, moveCard, moveCardAt, registerDeck } from "../../src/stores/deckStore";
+import { cardsInDeck, moveCard, moveCardAt, moveCardToTop, moveTopCard, registerDeck } from "../../src/stores/deckStore";
 import { Deck } from "../../src/models/Deck";
 import { Card } from "../../src/models/Card";
 import { registerPlugin } from "../../src/stores/pluginStore";
+import { freePlaceMode, getDropPointer } from "../../src/stores/freePlaceStore";
+import { getCardPos, setCardPos } from "../../src/stores/cardPositionsStore";
+
+// Renders cards in sortable snap layout
+const SnapCards = (props: { deckId: string; zone: string }) => (
+  <SortableProvider ids={cardsInDeck(props.deckId).map(c => c.id)}>
+    <For each={cardsInDeck(props.deckId)}>
+      {(card) => <CardComponent card={card} zoneId={props.zone} />}
+    </For>
+  </SortableProvider>
+);
+
+// Renders cards freely positioned by (x%, y%) stored in cardPositionsStore.
+// SortableProvider is required so createSortable has context and cards remain draggable.
+const FreeCards = (props: { deckId: string; zone: string }) => (
+  <SortableProvider ids={cardsInDeck(props.deckId).map(c => c.id)}>
+    <For each={cardsInDeck(props.deckId)}>
+      {(card) => (
+        <div
+          class="card-freeplace-wrap"
+          style={{
+            left: `${getCardPos(card.id)?.x ?? 15}%`,
+            top: `${getCardPos(card.id)?.y ?? 20}%`,
+          }}
+        >
+          <CardComponent card={card} zoneId={props.zone} />
+        </div>
+      )}
+    </For>
+  </SortableProvider>
+);
+
+// Zone cards area that switches between snap and free-place based on global toggle
+const ZoneCards = (props: { deckId: string; zone: string }) => (
+  <div class="zone-cards" classList={{ "zone-cards--free": freePlaceMode() }}>
+    <Show when={freePlaceMode()} fallback={<SnapCards deckId={props.deckId} zone={props.zone} />}>
+      <FreeCards deckId={props.deckId} zone={props.zone} />
+    </Show>
+  </div>
+);
 
 export class RiftBound implements Plugin {
   public id: string = "riftbound";
+  public startingScore: number = 20;
+  public scoreLabel: string = "HP";
+
+  cardActions: CardAction[] = [
+    {
+      label: "Send to Hand",
+      action: (id, zoneId) => moveCard(id, `${zoneId.split(':')[0]}:hand`),
+    },
+    {
+      label: "Send to Top of Deck",
+      action: (id, zoneId) => moveCardToTop(id, `${zoneId.split(':')[0]}:mainDeck`),
+    },
+    {
+      label: "Send to Bottom of Deck",
+      action: (id, zoneId) => moveCard(id, `${zoneId.split(':')[0]}:mainDeck`),
+    },
+    {
+      label: "Play as Rune",
+      action: (id, zoneId) => moveCard(id, `${zoneId.split(':')[0]}:PlayedRunes`),
+    },
+    {
+      label: "Return to Rune Deck",
+      action: (id, zoneId) => moveCard(id, `${zoneId.split(':')[0]}:UnplayedRunes`),
+    },
+    {
+      label: "Discard",
+      action: (id, zoneId) => moveCard(id, `${zoneId.split(':')[0]}:discard`),
+    },
+  ];
 
   theme: PluginTheme = {
     accentColor: "#c9a84c",
@@ -22,121 +91,120 @@ export class RiftBound implements Plugin {
     textMuted: "#c5c3d8",
     fontDisplay: "'Cinzel', Georgia, serif",
     fontBody: "'Rajdhani', system-ui, sans-serif",
-    // Ensures narrow deck columns (1 and 12) have minimum width on mobile
     gridColumnsTemplate: "minmax(52px, 1fr) repeat(10, 1fr) minmax(52px, 1fr)",
+    gridRowsTemplate: "repeat(6, 1fr) 1.4fr 1.4fr",
   };
 
+  /** Only registers the plugin — no deck creation here. */
   register(): void {
     registerPlugin(this);
+  }
 
-    const hand = new Deck("hand");
+  /** Creates all decks for a single player, scoped by playerId. */
+  registerPlayer(playerId: string): void {
+    const p = playerId;
+    const hand = new Deck(`${p}:hand`);
     registerDeck(hand);
-    registerDeck(new Deck("battlefield"));
-    registerDeck(new Deck("base"));
-    registerDeck(new Deck("UnplayedRunes"));
-    registerDeck(new Deck("PlayedRunes"));
-    registerDeck(new Deck("mainDeck"));
+    registerDeck(new Deck(`${p}:battlefield`));
+    registerDeck(new Deck(`${p}:base`));
+    registerDeck(new Deck(`${p}:UnplayedRunes`));
+    registerDeck(new Deck(`${p}:PlayedRunes`));
+    registerDeck(new Deck(`${p}:mainDeck`));
+    registerDeck(new Deck(`${p}:discard`));
 
+    // Starting hand
     hand.addCard(new Card("Draven"));
     hand.addCard(new Card("Yasuo"));
     hand.addCard(new Card("Ahri"));
   }
 
-  playAreas: PlayArea[] = [
-    {
-      id: "battlefield",
-      className: "zone-battlefield",
-      region: { xStart: 1, xFinish: 13, yStart: 1, yFinish: 4 },
-      content: () => (
-        <DropZone id="battlefield">
-          <div class="zone-inner">
-            <span class="zone-label">Battlefield</span>
-            <div class="zone-cards">
-              <SortableProvider ids={cardsInDeck("battlefield").map(c => c.id)}>
-                <For each={cardsInDeck("battlefield")}>
-                  {(card) => <CardComponent card={card} zoneId="battlefield" />}
-                </For>
-              </SortableProvider>
+  /** Returns the zone layout for a specific player, using player-scoped deck IDs. */
+  createPlayerAreas(playerId: string): PlayArea[] {
+    const p = playerId;
+    return [
+      {
+        id: `${p}:battlefield`,
+        className: "zone-battlefield",
+        region: { xStart: 1, xFinish: 13, yStart: 1, yFinish: 4 },
+        content: () => (
+          <DropZone id={`${p}:battlefield`}>
+            <div class="zone-inner">
+              <span class="zone-label">Battlefield</span>
+              <ZoneCards deckId={`${p}:battlefield`} zone={`${p}:battlefield`} />
             </div>
-          </div>
-        </DropZone>
-      ),
-    },
-    {
-      id: "base",
-      className: "zone-base",
-      region: { xStart: 1, xFinish: 13, yStart: 4, yFinish: 7 },
-      content: () => (
-        <DropZone id="base">
-          <div class="zone-inner">
-            <span class="zone-label">Base</span>
-            <div class="zone-cards">
-              <SortableProvider ids={cardsInDeck("base").map(c => c.id)}>
-                <For each={cardsInDeck("base")}>
-                  {(card) => <CardComponent card={card} zoneId="base" />}
-                </For>
-              </SortableProvider>
+          </DropZone>
+        ),
+      },
+      {
+        id: `${p}:base`,
+        className: "zone-base",
+        region: { xStart: 1, xFinish: 13, yStart: 4, yFinish: 7 },
+        content: () => (
+          <DropZone id={`${p}:base`}>
+            <div class="zone-inner">
+              <span class="zone-label">Base</span>
+              <ZoneCards deckId={`${p}:base`} zone={`${p}:base`} />
             </div>
-          </div>
-        </DropZone>
-      ),
-    },
-    {
-      id: "UnplayedRunes",
-      className: "zone-deck",
-      region: { xStart: 1, xFinish: 2, yStart: 7, yFinish: 9 },
-      content: () => (
-        <DropZone id="UnplayedRunes">
-          <div class="deck-zone">
-            <div class="deck-stack-wrap">
-              <div class="deck-card-back" />
-              <div class="deck-card-back" />
-              <div class="deck-card-back" />
+          </DropZone>
+        ),
+      },
+      {
+        id: `${p}:UnplayedRunes`,
+        className: "zone-deck",
+        region: { xStart: 1, xFinish: 2, yStart: 7, yFinish: 9 },
+        content: () => (
+          <DropZone id={`${p}:UnplayedRunes`}>
+            <div
+              class="deck-zone deck-zone--clickable"
+              onClick={() => moveTopCard(`${p}:UnplayedRunes`, `${p}:PlayedRunes`)}
+              title="Rune Deck — click to reveal top card"
+            >
+              <div class="deck-stack-wrap">
+                <div class="deck-card-back" />
+                <div class="deck-card-back" />
+                <div class="deck-card-back" />
+                <span class="deck-count-overlay">{cardsInDeck(`${p}:UnplayedRunes`).length}</span>
+              </div>
             </div>
-            <span class="deck-count">{cardsInDeck("UnplayedRunes").length}</span>
-            <span class="zone-label" style={{ "text-align": "center", "line-height": "1.2" }}>Rune{"\n"}Deck</span>
-          </div>
-        </DropZone>
-      ),
-    },
-    {
-      id: "PlayedRunes",
-      className: "zone-runes",
-      region: { xStart: 2, xFinish: 12, yStart: 7, yFinish: 9 },
-      content: () => (
-        <DropZone id="PlayedRunes">
-          <div class="zone-inner">
-            <span class="zone-label">Runes</span>
-            <div class="zone-cards">
-              <SortableProvider ids={cardsInDeck("PlayedRunes").map(c => c.id)}>
-                <For each={cardsInDeck("PlayedRunes")}>
-                  {(card) => <CardComponent card={card} zoneId="PlayedRunes" />}
-                </For>
-              </SortableProvider>
+          </DropZone>
+        ),
+      },
+      {
+        id: `${p}:PlayedRunes`,
+        className: "zone-runes",
+        region: { xStart: 2, xFinish: 12, yStart: 7, yFinish: 9 },
+        content: () => (
+          <DropZone id={`${p}:PlayedRunes`}>
+            <div class="zone-inner">
+              <span class="zone-label">Runes</span>
+              <ZoneCards deckId={`${p}:PlayedRunes`} zone={`${p}:PlayedRunes`} />
             </div>
-          </div>
-        </DropZone>
-      ),
-    },
-    {
-      id: "mainDeck",
-      className: "zone-deck",
-      region: { xStart: 12, xFinish: 13, yStart: 7, yFinish: 9 },
-      content: () => (
-        <DropZone id="mainDeck">
-          <div class="deck-zone">
-            <div class="deck-stack-wrap">
-              <div class="deck-card-back" />
-              <div class="deck-card-back" />
-              <div class="deck-card-back" />
+          </DropZone>
+        ),
+      },
+      {
+        id: `${p}:mainDeck`,
+        className: "zone-deck",
+        region: { xStart: 12, xFinish: 13, yStart: 7, yFinish: 9 },
+        content: () => (
+          <DropZone id={`${p}:mainDeck`}>
+            <div
+              class="deck-zone deck-zone--clickable"
+              onClick={() => moveTopCard(`${p}:mainDeck`, `${p}:hand`)}
+              title="Main Deck — click to draw"
+            >
+              <div class="deck-stack-wrap">
+                <div class="deck-card-back" />
+                <div class="deck-card-back" />
+                <div class="deck-card-back" />
+                <span class="deck-count-overlay">{cardsInDeck(`${p}:mainDeck`).length}</span>
+              </div>
             </div>
-            <span class="deck-count">{cardsInDeck("mainDeck").length}</span>
-            <span class="zone-label" style={{ "text-align": "center", "line-height": "1.2" }}>Deck</span>
-          </div>
-        </DropZone>
-      ),
-    },
-  ];
+          </DropZone>
+        ),
+      },
+    ];
+  }
 
   onDragEnd: DragEventHandler = ({ draggable, droppable }) => {
     if (!draggable || !droppable) return;
@@ -144,12 +212,31 @@ export class RiftBound implements Plugin {
     const targetId = droppable.id as string;
     const targetData = droppable.data as { card?: Card; zoneId?: string } | null;
 
-    if (targetData?.card && targetData?.zoneId) {
-      // Dropped on another card — insert before it in the target zone
-      moveCardAt(draggable.id as string, targetData.zoneId, targetId);
+    if (freePlaceMode()) {
+      // In free-place mode: move card to zone then store pointer-relative position
+      const zoneEl = droppable.node as HTMLElement;
+      const zoneRect = zoneEl.getBoundingClientRect();
+      const { x: px, y: py } = getDropPointer();
+      const relX = Math.max(5, Math.min(90, ((px - zoneRect.left) / zoneRect.width) * 100));
+      const relY = Math.max(5, Math.min(90, ((py - zoneRect.top) / zoneRect.height) * 100));
+
+      const cardId = draggable.id as string;
+      if (targetData?.card && targetData?.zoneId) {
+        moveCardAt(cardId, targetData.zoneId, targetId);
+      } else {
+        moveCard(cardId, targetId);
+      }
+      setCardPos(cardId, relX, relY);
     } else {
-      // Dropped on a zone — append to end
-      moveCard(draggable.id as string, targetId);
+      if (targetData?.card && targetData?.zoneId) {
+        moveCardAt(draggable.id as string, targetData.zoneId, targetId);
+      } else {
+        moveCard(draggable.id as string, targetId);
+      }
     }
   };
+
+  // Lifecycle hooks — RiftBound uses these as extension points.
+  // onGameStart, onTurnStart, onTurnEnd, onCardMoved are all optional.
+  // Add game-specific reactions here (e.g., auto-draw on turn start).
 }

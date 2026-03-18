@@ -6,6 +6,7 @@ import {
   toggleMessaging,
   type Player,
 } from "../stores/gameStore";
+import { freePlaceMode, setFreePlaceMode } from "../stores/freePlaceStore";
 
 const PlayerPanel = (props: { player: Player }) => {
   const isLocalPlayer = () => props.player.id === gameState.localPlayerId;
@@ -26,6 +27,7 @@ const PlayerPanel = (props: { player: Player }) => {
         </Show>
       </div>
       <div class="player-panel-score">
+        <span class="score-label">{gameState.scoreLabel}</span>
         <button
           class="score-btn"
           onClick={() => adjustScore(props.player.id, -1)}
@@ -50,20 +52,31 @@ export const GameHeader = () => {
   const isMyTurn = () => gameState.currentTurnPlayerId === gameState.localPlayerId;
 
   return (
-    <>
-      <header class="game-header">
-        <div class="game-header-players">
+    <aside class="game-sidebar">
+      {/* Horizontal row: players + actions. Drawer sits BELOW this, not inside it. */}
+      <div class="sidebar-toprow">
+        <div class="sidebar-players">
           <For each={gameState.players}>
             {(player) => <PlayerPanel player={player} />}
           </For>
         </div>
-        <div class="game-header-actions">
+
+        <div class="sidebar-actions">
           <button
             class="end-turn-btn"
             classList={{ "end-turn-btn--ready": isMyTurn() }}
             onClick={endTurn}
           >
             <span class="end-turn-label">End Turn</span>
+          </button>
+          <button
+            class="freeplace-btn"
+            classList={{ "freeplace-btn--active": freePlaceMode() }}
+            onClick={() => setFreePlaceMode(v => !v)}
+            title={freePlaceMode() ? "Switch to snap layout" : "Switch to free placement"}
+          >
+            <span class="freeplace-icon">{freePlaceMode() ? "⊠" : "⊞"}</span>
+            <span class="freeplace-label">{freePlaceMode() ? "Snap" : "Free"}</span>
           </button>
           <button
             class="msg-toggle-btn"
@@ -74,7 +87,9 @@ export const GameHeader = () => {
             ✉
           </button>
         </div>
-      </header>
+      </div>
+
+      {/* Drawer renders below the toprow — never inside the horizontal row */}
       <Show when={gameState.showMessaging}>
         <div class="messaging-drawer">
           <div class="messaging-inner">
@@ -82,6 +97,6 @@ export const GameHeader = () => {
           </div>
         </div>
       </Show>
-    </>
+    </aside>
   );
 };

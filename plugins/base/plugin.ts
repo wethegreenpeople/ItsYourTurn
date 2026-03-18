@@ -22,14 +22,60 @@ export interface PluginTheme {
   fontBody?: string;
   /** CSS grid-template-columns value — lets plugin define column widths */
   gridColumnsTemplate?: string;
+  /** CSS grid-template-rows value — lets plugin control row count and sizing */
+  gridRowsTemplate?: string;
+}
+
+export interface CardAction {
+  label: string;
+  action: (cardId: string, zoneId: string) => void;
 }
 
 export interface Plugin {
   id: string;
-  playAreas: PlayArea[];
   theme?: PluginTheme;
+
+  /** Starting score (HP, life points, etc.) for each player. Default: 20. */
+  startingScore?: number;
+  /** Label shown next to the score counter. Default: "HP". */
+  scoreLabel?: string;
+  /** Context menu actions available on any card. Plugin-specific. */
+  cardActions?: CardAction[];
+
+  /**
+   * Called once to register the plugin itself. Should only call registerPlugin(this).
+   * Do NOT create decks here — create them in registerPlayer().
+   */
   register: () => void;
+
+  /**
+   * Called once per player before the game starts.
+   * Create all player-scoped decks here (e.g. `"p1:hand"`, `"p1:battlefield"`).
+   */
+  registerPlayer: (playerId: string) => void;
+
+  /**
+   * Return the PlayAreas (zone layout) for a specific player.
+   * All deck IDs in the returned areas should be scoped to `playerId`.
+   */
+  createPlayerAreas: (playerId: string) => PlayArea[];
+
+  /** Drag-and-drop resolution. Receives draggable and droppable after a drag ends. */
   onDragEnd: DragEventHandler;
+
+  // ── Lifecycle hooks (all optional) ──────────────────────────────────────
+
+  /** Called after all players are registered, before first render. */
+  onGameStart?: (players: { id: string; name: string }[]) => void;
+  /** Called when a player's turn begins. */
+  onTurnStart?: (playerId: string) => void;
+  /** Called when a player's turn ends. */
+  onTurnEnd?: (playerId: string) => void;
+  /**
+   * Called after any card move (drag, context menu action, deck click).
+   * fromZoneId and toZoneId are the deck IDs involved.
+   */
+  onCardMoved?: (cardId: string, fromZoneId: string, toZoneId: string) => void;
 }
 
 export interface PlayArea {

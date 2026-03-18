@@ -1,4 +1,5 @@
 import { createStore } from "solid-js/store";
+import { getActivePlugin } from "./pluginStore";
 
 export interface Player {
   id: string;
@@ -13,10 +14,18 @@ const [gameState, setGameState] = createStore({
   ] as Player[],
   currentTurnPlayerId: "p1",
   localPlayerId: "p1",
+  scoreLabel: "HP",
   showMessaging: false,
 });
 
 export { gameState };
+
+export function initGame(startingScore: number, scoreLabel: string = "HP") {
+  setGameState("scoreLabel", scoreLabel);
+  gameState.players.forEach((_, idx) => {
+    setGameState("players", idx, "score", startingScore);
+  });
+}
 
 export function adjustScore(playerId: string, delta: number) {
   const idx = gameState.players.findIndex((p) => p.id === playerId);
@@ -29,7 +38,9 @@ export function endTurn() {
   const ids = gameState.players.map((p) => p.id);
   const currentIdx = ids.indexOf(gameState.currentTurnPlayerId);
   const nextIdx = (currentIdx + 1) % ids.length;
+  getActivePlugin()?.onTurnEnd?.(gameState.currentTurnPlayerId);
   setGameState("currentTurnPlayerId", ids[nextIdx]);
+  getActivePlugin()?.onTurnStart?.(ids[nextIdx]);
 }
 
 export function toggleMessaging() {

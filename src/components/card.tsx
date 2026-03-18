@@ -1,6 +1,8 @@
 import { createSortable } from "@thisbeyond/solid-dnd";
 import { createSignal } from "solid-js";
 import { Card } from "../models/Card";
+import { showContextMenu } from "../stores/contextMenuStore";
+import { showPreview } from "../stores/cardPreviewStore";
 
 export const PALETTES = [
   { top: '#2d1b4e', bot: '#0e0818', artA: '#3d1f6e', artB: '#180830', symbol: '✦' },
@@ -55,12 +57,43 @@ export const CardComponent = (props: { card: Card; zoneId: string }) => {
   const sortable = createSortable(props.card.id, { card: props.card, zoneId: props.zoneId });
   const [tapped, setTapped] = createSignal(false);
 
+  let pressTimer: ReturnType<typeof setTimeout> | null = null;
+  let startX = 0, startY = 0;
+
+  const onPointerDown = (e: PointerEvent) => {
+    startX = e.clientX;
+    startY = e.clientY;
+    pressTimer = setTimeout(() => {
+      pressTimer = null;
+      showPreview(props.card, startX, startY);
+    }, 600);
+  };
+
+  const cancelPress = () => {
+    if (pressTimer !== null) { clearTimeout(pressTimer); pressTimer = null; }
+  };
+
+  const onPointerMove = (e: PointerEvent) => {
+    if (pressTimer && (Math.abs(e.clientX - startX) > 8 || Math.abs(e.clientY - startY) > 8)) {
+      cancelPress();
+    }
+  };
+
   return (
     <div
       use:sortable={sortable}
       class="card-drag-wrapper"
       style={{ "touch-action": "none" }}
+      onPointerDown={onPointerDown}
+      onPointerUp={cancelPress}
+      onPointerLeave={cancelPress}
+      onPointerMove={onPointerMove}
       onDblClick={() => setTapped(t => !t)}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        cancelPress();
+        showContextMenu(e.clientX, e.clientY, props.card.id, props.zoneId);
+      }}
     >
       <CardVisual
         card={props.card}
