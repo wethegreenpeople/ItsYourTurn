@@ -8,6 +8,8 @@ import {
 } from "../stores/gameStore";
 import { freePlaceMode, setFreePlaceMode } from "../stores/freePlaceStore";
 import { LoadDeckModal } from "./LoadDeckModal";
+import { cardsInDeck } from "../stores/deckStore";
+import { openDeckSearch } from "../stores/deckContextMenuStore";
 
 const PlayerPanel = (props: { player: Player }) => {
   const isLocalPlayer = () => props.player.id === gameState.localPlayerId;
@@ -20,6 +22,7 @@ const PlayerPanel = (props: { player: Player }) => {
         "player-panel--local": isLocalPlayer(),
         "player-panel--active": isCurrentTurn(),
       }}
+      data-player-id={props.player.id}
     >
       <div class="player-panel-top">
         <span class="player-name">{props.player.name}</span>
@@ -80,6 +83,18 @@ export const GameHeader = () => {
             <span class="freeplace-label">{freePlaceMode() ? "Snap" : "Free"}</span>
           </button>
           <LoadDeckModal />
+          <Show when={cardsInDeck(`${gameState.localPlayerId}:sideboard`).length > 0}>
+            <button
+              class="sideboard-btn"
+              onClick={() => openDeckSearch(`${gameState.localPlayerId}:sideboard`, "Sideboard")}
+              title="View sideboard"
+            >
+              <span class="sideboard-icon">⧉</span>
+              <span class="sideboard-label">
+                Sideboard ({cardsInDeck(`${gameState.localPlayerId}:sideboard`).length})
+              </span>
+            </button>
+          </Show>
           <button
             class="msg-toggle-btn"
             classList={{ "msg-toggle-btn--open": gameState.showMessaging }}

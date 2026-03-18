@@ -1,4 +1,4 @@
-import { createEffect, createSignal, For, JSX, onCleanup, Show } from "solid-js";
+import { createEffect, For, JSX, onCleanup, Show } from "solid-js";
 import {
   DragDropProvider,
   DragDropSensors,
@@ -11,13 +11,19 @@ import "./App.css";
 import { CardComponent, CardVisual } from "./components/card";
 import { Card } from "./models/Card";
 import { Plugins, setActivePlugin } from "./stores/pluginStore";
-import { cardsInDeck } from "./stores/deckStore";
+import { cardsInDeck, moveCard } from "./stores/deckStore";
+import { viewingPlayerId, setViewingPlayerId } from "./stores/boardViewStore";
 import { gameState, initGame } from "./stores/gameStore";
 import { GameHeader } from "./components/GameHeader";
 import { CardContextMenu } from "./components/CardContextMenu";
+import { DeckContextMenu } from "./components/DeckContextMenu";
+import { DeckSearchModal } from "./components/DeckSearchModal";
 import { previewState, hidePreview } from "./stores/cardPreviewStore";
 import { ArrowOverlay } from "./components/ArrowOverlay";
 import { pendingSource, cancelTargeting } from "./stores/targetingStore";
+import { SelectionBox } from "./components/SelectionBox";
+import { isHorizontal } from "./stores/cardStateStore";
+import { DragBoardSwitcher } from "./components/DragBoardSwitcher";
 
 export const DropZone = (props: { id: string; children: JSX.Element }) => {
   const droppable = createDroppable(props.id);
@@ -68,10 +74,16 @@ function App() {
     "--plugin-grid-rows":    t.gridRowsTemplate    ?? "repeat(12, 1fr)",
   };
 
-  // Mobile: which player's board to show (desktop shows all)
-  const [viewingPlayerId, setViewingPlayerId] = createSignal(gameState.localPlayerId);
-  // Auto-switch mobile view to the active player on end turn
-  createEffect(() => setViewingPlayerId(gameState.currentTurnPlayerId));
+  // Context menu actions: static plugin actions + dynamic "send to other player's battlefield" entries
+  const allCardActions = () => [
+    ...(plugin.cardActions ?? []),
+    ...gameState.players
+      .filter(p => p.id !== gameState.localPlayerId)
+      .map(p => ({
+        label: `To ${p.name}'s Battlefield`,
+        action: (cardId: string) => moveCard(cardId, `${p.id}:battlefield`),
+      })),
+  ];
 
   // Targeting mode: crosshair cursor, Escape or click-away to cancel
   createEffect(() => {
@@ -81,7 +93,10 @@ function App() {
     if (!pendingSource()) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") cancelTargeting(); };
     const onDocClick = (e: MouseEvent) => {
-      if (!(e.target as Element).closest("[data-card-id]")) cancelTargeting();
+      const t = e.target as Element;
+      // Allow clicking cards (completes target) and board-switch controls without cancelling
+      if (t.closest("[data-card-id]") || t.closest("[data-player-id]")) return;
+      cancelTargeting();
     };
     document.addEventListener("keydown", onKey);
     document.addEventListener("click", onDocClick, { capture: true });
@@ -94,7 +109,10 @@ function App() {
   return (
     <DragDropProvider onDragEnd={plugin.onDragEnd}>
       <DragDropSensors />
-      <CardContextMenu actions={plugin.cardActions ?? []} />
+      <CardContextMenu actions={allCardActions()} />
+      <DeckContextMenu />
+      <DeckSearchModal />
+      <DragBoardSwitcher />
       <main class="game-root" style={themeVars}>
         <GameHeader />
         <div class="game-main">
@@ -108,6 +126,7 @@ function App() {
                     class="board-switcher-tab"
                     classList={{ "board-switcher-tab--active": viewingPlayerId() === p.id }}
                     onClick={() => setViewingPlayerId(p.id)}
+                    data-player-id={p.id}
                   >
                     {p.id === gameState.localPlayerId ? `${p.name} (You)` : p.name}
                   </button>
@@ -145,6 +164,7 @@ function App() {
                         {(panel) => (
                           <div
                             class={`zone-panel${panel.className ? ` ${panel.className}` : ''}`}
+                            data-zone={panel.id}
                             style={{
                               "grid-column": `${panel.region.xStart} / ${panel.region.xFinish}`,
                               "grid-row":    `${panel.region.yStart} / ${panel.region.yFinish}`,
@@ -184,7 +204,16 @@ function App() {
       <DragOverlay>
         {(draggable) => (
           <Show when={draggable}>
-            <CardVisual card={draggable!.data.card as Card} />
+            {() => {
+              const card = draggable!.data.card as Card;
+              const zoneId = draggable!.data.zoneId as string;
+              return (
+                <CardVisual
+                  card={card}
+                  horizontal={isHorizontal(card.id)}
+                />
+              );
+            }}
           </Show>
         )}
       </DragOverlay>
@@ -192,18 +221,28 @@ function App() {
       {/* Targeting arrows — live SVG overlay tracking source→target card centers */}
       <ArrowOverlay />
 
+      {/* Rubber-band multi-card selection */}
+      <SelectionBox />
+
       {/* Card preview — floats near long-press position, transparent backdrop closes it */}
       <Show when={previewState()}>
-        <div class="card-preview-backdrop" onClick={hidePreview} />
-        <div
-          class="card-preview-popup"
-          style={{
-            left: `${Math.max(8, Math.min(window.innerWidth - 196, previewState()!.x + 15))}px`,
-            top: `${Math.max(8, Math.min(window.innerHeight - 260, previewState()!.y - 280))}px`,
-          }}
-        >
-          <CardVisual card={previewState()!.card} />
-        </div>
+        {() => {
+          const card = previewState()!.card;
+          const horiz = isHorizontal(card.id);
+          // Portrait preview: 270×378. Horizontal preview: 378×270 (swapped).
+          const pw = horiz ? 378 : 270;
+          const ph = horiz ? 270 : 378;
+          const x = Math.max(8, Math.min(window.innerWidth  - pw - 16, previewState()!.x + 15));
+          const y = Math.max(8, Math.min(window.innerHeight - ph - 16, previewState()!.y - ph));
+          return (
+            <>
+              <div class="card-preview-backdrop" onClick={hidePreview} />
+              <div class="card-preview-popup" style={{ left: `${x}px`, top: `${y}px` }}>
+                <CardVisual card={card} horizontal={horiz} />
+              </div>
+            </>
+          );
+        }}
       </Show>
 
     </DragDropProvider>

@@ -50,10 +50,10 @@ body {
   min-height: 0;
   padding: 6px;
   position: relative;
-  /* overflow: visible so tapped (rotated) cards and zone content can extend
-     beyond zone boundaries without being clipped */
-  overflow: visible;
+  overflow: hidden;
 }
+
+
 
 .game-board::after {
   content: '';
@@ -68,11 +68,12 @@ body {
 @media (min-width: 768px) {
   .game-board {
     padding: 10px;
+    /* Restore visible overflow on tablet+ so tapped/rotated cards aren't clipped */
+    overflow: visible;
   }
 }
 
 .game-grid {
-  /* Fill the full board area. Plugin controls row count via --plugin-grid-rows. */
   height: 100%;
   width: 100%;
   display: grid;
@@ -84,6 +85,33 @@ body {
   border: 1px solid #353850;
   border-radius: 8px;
   padding: 3px;
+}
+
+/* ===================== MOBILE GRID REFLOW ===================== */
+/* On mobile: legend+champion row first, then battlefield, then base/runes.
+   All inline grid-column/row styles are overridden with !important. */
+@media (max-width: 767px) {
+  .game-grid {
+    grid-template-columns: 44px repeat(10, minmax(0, 1fr)) 44px !important;
+    /* 4 proportional rows: legend/champ | battlefield | base | runes */
+    grid-template-rows: 1.5fr 2fr 2fr 1.5fr !important;
+  }
+
+  /* Legend and Champion share the top row, side by side */
+  [data-zone$=":legend"]    { grid-column: 1 / 7  !important; grid-row: 1 / 2 !important; }
+  [data-zone$=":champion"]  { grid-column: 7 / 13 !important; grid-row: 1 / 2 !important; }
+
+  /* Battlefield spans full width in the second row */
+  [data-zone$=":battlefield"] { grid-column: 1 / 13 !important; grid-row: 2 / 3 !important; }
+
+  /* Base + main deck in the third row */
+  [data-zone$=":base"]     { grid-column: 1 / 12 !important; grid-row: 3 / 4 !important; }
+  [data-zone$=":mainDeck"] { grid-column: 12 / 13 !important; grid-row: 3 / 4 !important; }
+
+  /* Rune deck + played runes + trash in the fourth row */
+  [data-zone$=":UnplayedRunes"] { grid-column: 1 / 2   !important; grid-row: 4 / 5 !important; }
+  [data-zone$=":PlayedRunes"]   { grid-column: 2 / 12  !important; grid-row: 4 / 5 !important; }
+  [data-zone$=":trash"]         { grid-column: 12 / 13 !important; grid-row: 4 / 5 !important; }
 }
 
 @media (min-width: 768px) {
@@ -177,22 +205,33 @@ body {
   flex: 1;
   min-height: 0;
   padding: 2px 4px 4px;
-  overflow: hidden;
+  /* Scroll when cards overflow rather than clipping them */
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201, 168, 76, 0.18) transparent;
+}
+
+.zone-cards::-webkit-scrollbar { width: 3px; }
+.zone-cards::-webkit-scrollbar-track { background: transparent; }
+.zone-cards::-webkit-scrollbar-thumb {
+  background: rgba(201, 168, 76, 0.2);
+  border-radius: 2px;
 }
 
 /* Cards inside zones auto-size to fill zone height.
    Height = zone panel height minus label + padding overhead.
    Width follows the ~2:3 card aspect ratio. Capped at natural max. */
 .zone-panel .tcg-card {
-  height: min(calc(100cqh - 26px), 117px);
-  width: calc(min(calc(100cqh - 26px), 117px) * 0.718);
+  height: min(calc(100cqh - 32px), 117px);
+  width: calc(min(calc(100cqh - 32px), 117px) * 0.718);
 }
 
 /* On very small zones (label hidden), less overhead to maximize card size */
 @container zone-panel (max-height: 60px) {
   .tcg-card {
-    height: min(calc(100cqh - 10px), 117px);
-    width: calc(min(calc(100cqh - 10px), 117px) * 0.718);
+    height: min(calc(100cqh - 14px), 117px);
+    width: calc(min(calc(100cqh - 14px), 117px) * 0.718);
   }
 }
 
@@ -369,14 +408,16 @@ body {
   height: 100%;
   padding: 4px;
   gap: 0;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .deck-stack-wrap {
   position: relative;
-  width: 28px;
-  height: 38px;
+  width: 32px;
+  height: 44px;
   flex-shrink: 0;
-  margin: 4px 8px 2px;
+  margin: 4px 6px 2px;
 }
 
 @media (min-width: 768px) {
@@ -434,10 +475,46 @@ body {
   display: inline-block;
   flex-shrink: 0;
   cursor: grab;
+  position: relative;
 }
 
 .card-drag-wrapper:active {
   cursor: grabbing;
+}
+
+/* Cross-player targeting badges — shown on source/target cards when arrow spans boards */
+.cross-player-badge {
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  padding: 1px 5px;
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: 10;
+  line-height: 14px;
+}
+
+.cross-player-badge--out {
+  background: rgba(201, 168, 76, 0.92);
+  color: #1a1100;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+
+.cross-player-badge--in {
+  background: rgba(210, 60, 60, 0.92);
+  color: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  animation: badge-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes badge-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.55; }
 }
 
 /* Drag overlay must always paint above zone stacking contexts (container-type: size) */
@@ -1170,8 +1247,9 @@ body.targeting-mode [data-card-id] .tcg-card {
 }
 
 .card-preview-popup .tcg-card {
-  width: 180px !important;
-  height: 252px !important;
+  /* 50% larger than base portrait 180×252 */
+  width: 270px !important;
+  height: 378px !important;
   cursor: default;
   box-shadow:
     0 24px 60px rgba(0, 0, 0, 0.9),
@@ -1179,13 +1257,29 @@ body.targeting-mode [data-card-id] .tcg-card {
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
+/* Horizontal preview card: dimensions are swapped vs portrait */
+.card-preview-popup .tcg-card--horizontal {
+  width: 378px !important;
+  height: 270px !important;
+}
+
 .card-preview-popup .tcg-card:hover {
   transform: none;
 }
 
-.card-preview-popup .card-name { font-size: 14px !important; }
-.card-preview-popup .card-type { font-size: 10px !important; }
-.card-preview-popup .card-art-symbol { font-size: 56px !important; }
+/* Hide the name strip so full card art is visible */
+.card-preview-popup .card-footer { display: none; }
+
+/* Prevent native browser image drag from hijacking solid-dnd pointer events */
+.card-inner img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-drag: none;
+}
 
 /* ===================== FREE PLACE MODE ===================== */
 
@@ -1475,4 +1569,304 @@ body.targeting-mode [data-card-id] .tcg-card {
 .modal-load-btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
+}
+
+/* ===================== DECK SEARCH MODAL ===================== */
+
+.deck-search-modal {
+  max-width: 700px;
+  width: 100%;
+}
+
+.deck-search-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.deck-search-header .modal-title {
+  flex-shrink: 0;
+}
+
+.deck-search-count {
+  font-size: 0.75em;
+  font-weight: 400;
+  color: var(--plugin-text-muted, #c5c3d8);
+}
+
+.deck-search-input {
+  flex: 1;
+  min-width: 140px;
+  background: rgba(10, 12, 22, 0.9);
+  border: 1px solid #2e3250;
+  border-radius: 6px;
+  color: var(--plugin-text, #e2d9c7);
+  font-family: var(--plugin-font-body, 'Rajdhani', system-ui, sans-serif);
+  font-size: clamp(12px, 1vw, 14px);
+  padding: 7px 10px;
+  transition: border-color 0.2s ease;
+}
+
+.deck-search-input:focus {
+  outline: none;
+  border-color: rgba(201, 168, 76, 0.5);
+}
+
+/* Fixed-column grid — 5 across on wide screens, fewer on narrow */
+.deck-search-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 88px);
+  justify-content: start;
+  gap: 10px 8px;
+  max-height: 54vh;
+  min-height: 120px;
+  overflow-y: auto;
+  padding: 2px 4px 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201, 168, 76, 0.2) transparent;
+}
+
+.deck-search-results::-webkit-scrollbar { width: 5px; }
+.deck-search-results::-webkit-scrollbar-track { background: transparent; }
+.deck-search-results::-webkit-scrollbar-thumb {
+  background: rgba(201, 168, 76, 0.22);
+  border-radius: 3px;
+}
+
+.deck-search-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  width: 88px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 5px 4px 6px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  /* Reset button defaults */
+  font: inherit;
+  color: inherit;
+  text-align: center;
+}
+
+.deck-search-card:hover {
+  border-color: rgba(201, 168, 76, 0.4);
+  background: rgba(201, 168, 76, 0.06);
+}
+
+/* Override zone-panel container-query sizing — fixed size in the search grid */
+.deck-search-card .tcg-card {
+  width: 68px !important;
+  height: 95px !important;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.deck-search-card .tcg-card--horizontal {
+  width: 95px !important;
+  height: 68px !important;
+}
+
+.deck-search-card:hover .tcg-card {
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.55), 0 0 10px rgba(201,168,76,0.22);
+}
+
+.deck-search-card-name {
+  font-family: var(--plugin-font-body, 'Rajdhani', system-ui, sans-serif);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--plugin-text-muted, #c5c3d8);
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.deck-search-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px 0;
+  font-family: var(--plugin-font-body, 'Rajdhani', system-ui, sans-serif);
+  font-size: 13px;
+  color: rgba(197, 195, 216, 0.35);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ===================== HORIZONTAL CARDS ===================== */
+
+/* Landscape card — aspect ratio is inverted vs portrait.
+   In zones: height is still driven by container height, width follows at 1.39× ratio.
+   In hand / overlay: width is the larger dimension. */
+.tcg-card--horizontal {
+  width: clamp(72px, 7.7vw, 117px);
+  height: clamp(52px, 5.5vw, 84px);
+}
+
+.zone-panel .tcg-card--horizontal {
+  height: min(calc(100cqh - 26px), 84px);
+  width: calc(min(calc(100cqh - 26px), 84px) * 1.39);
+}
+
+@container zone-panel (max-height: 60px) {
+  .tcg-card--horizontal {
+    height: min(calc(100cqh - 10px), 84px);
+    width: calc(min(calc(100cqh - 10px), 84px) * 1.39);
+  }
+}
+
+/* Tapped horizontal card rotates to portrait — standard TCG tap behaviour */
+.tcg-card--horizontal.is-tapped {
+  transform: rotate(90deg) translateX(8px);
+}
+
+/* ===================== FACE-DOWN CARD BACK ===================== */
+
+.tcg-card.is-facedown .card-inner {
+  background: linear-gradient(135deg, #28214a 0%, #14102a 100%);
+  border-color: var(--plugin-accent, #c9a84c);
+}
+
+/* Hide art and name when face-down */
+.tcg-card.is-facedown img,
+.tcg-card.is-facedown .card-footer {
+  display: none;
+}
+
+/* Decorative inner border mimicking card back pattern */
+.tcg-card.is-facedown .card-inner::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(201, 168, 76, 0.28);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+/* ===================== EMPTY ZONE SCROLLBAR ===================== */
+
+/* Hide scrollbar chrome when zone has no cards */
+.zone-cards--empty {
+  overflow-y: hidden;
+}
+
+/* ===================== SIDEBOARD BUTTON ===================== */
+
+.sideboard-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 8px;
+  background: rgba(22, 25, 42, 0.85);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  color: var(--plugin-accent, #c9a84c);
+}
+
+.sideboard-btn:hover {
+  background: rgba(201, 168, 76, 0.12);
+  border-color: rgba(201, 168, 76, 0.55);
+}
+
+.sideboard-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.sideboard-label {
+  display: none;
+  font-family: var(--plugin-font-body, 'Rajdhani', system-ui, sans-serif);
+  font-size: clamp(9px, 0.8vw, 12px);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@media (min-width: 1024px) {
+  .sideboard-btn {
+    padding: 8px 10px;
+    justify-content: center;
+  }
+  .sideboard-label {
+    display: inline;
+  }
+}
+
+/* ===================== MULTI-CARD SELECTION ===================== */
+
+.tcg-card.is-selected {
+  outline: 2px solid rgba(201, 168, 76, 0.85);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.2), 0 0 14px rgba(201, 168, 76, 0.25);
+}
+
+.selection-box {
+  position: fixed;
+  z-index: 9990;
+  pointer-events: none;
+  background: rgba(201, 168, 76, 0.07);
+  border: 1px solid rgba(201, 168, 76, 0.5);
+  border-radius: 2px;
+}
+
+/* ===================== DRAG BOARD SWITCHER ===================== */
+
+/* Edge zones are mobile-only; hidden on desktop where all boards are visible */
+.drag-edge-zone {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .drag-edge-zone {
+    display: flex;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    width: 52px;
+    z-index: 8000;
+    pointer-events: none;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease, background 0.2s ease;
+    background: transparent;
+  }
+
+  .drag-edge-zone--left  { left: 0; }
+  .drag-edge-zone--right { right: 0; }
+
+  .drag-edge-zone--active {
+    opacity: 1;
+    background: linear-gradient(
+      to var(--edge-dir, right),
+      rgba(201, 168, 76, 0.25),
+      transparent
+    );
+  }
+
+  .drag-edge-zone--left.drag-edge-zone--active  { --edge-dir: right; }
+  .drag-edge-zone--right.drag-edge-zone--active { --edge-dir: left; }
+
+  .drag-edge-arrow {
+    font-size: 32px;
+    line-height: 1;
+    color: rgba(201, 168, 76, 0.9);
+    text-shadow: 0 0 8px rgba(201, 168, 76, 0.5);
+  }
+
+  /* Highlight player panels / board-switcher tabs when pointer hovers during drag */
+  [data-player-id]:hover {
+    outline: 2px solid rgba(201, 168, 76, 0.5);
+    outline-offset: 2px;
+    border-radius: 5px;
+  }
 }
