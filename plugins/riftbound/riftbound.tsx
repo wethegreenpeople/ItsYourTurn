@@ -11,7 +11,9 @@ import { Card } from "../../src/models/Card";
 import { registerPlugin } from "../../src/stores/pluginStore";
 import { freePlaceMode, getDropPointer } from "../../src/stores/freePlaceStore";
 import { getCardPos, setCardPos } from "../../src/stores/cardPositionsStore";
-import { cancelTargeting, isTargeting, startTargeting, stopTargeting } from "../../src/stores/targetingStore";
+import { startTargeting, stopTargeting } from "../../src/stores/targetingStore";
+import { findDeckForCard } from "../../src/stores/deckStore";
+import { showPreview } from "../../src/stores/cardPreviewStore";
 
 // Renders cards in sortable snap layout
 const SnapCards = (props: { deckId: string; zone: string }) => (
@@ -57,6 +59,16 @@ export class RiftBound implements Plugin {
   public scoreLabel: string = "Score";
 
   cardActions: CardAction[] = [
+    {
+      label: "Inspect",
+      action: (id) => {
+        const card = findDeckForCard(id)?.cards.find(c => c.id === id);
+        const el = document.querySelector(`[data-card-id="${id}"]`);
+        if (!card || !el) return;
+        const r = el.getBoundingClientRect();
+        showPreview(card, r.right + 12, r.top + r.height / 2);
+      },
+    },
     {
       label: "Target",
       action: (id) => startTargeting(id),

@@ -2,7 +2,6 @@ import { createSortable } from "@thisbeyond/solid-dnd";
 import { createSignal } from "solid-js";
 import { Card } from "../models/Card";
 import { showContextMenu } from "../stores/contextMenuStore";
-import { showPreview } from "../stores/cardPreviewStore";
 import { pendingSource, completeTarget } from "../stores/targetingStore";
 
 export const PALETTES = [
@@ -67,7 +66,7 @@ export const CardComponent = (props: { card: Card; zoneId: string }) => {
     startY = e.clientY;
     pressTimer = setTimeout(() => {
       pressTimer = null;
-      showPreview(props.card, startX, startY);
+      showContextMenu(startX, startY, props.card.id, props.zoneId);
     }, 600);
   };
 
