@@ -445,6 +445,30 @@ body {
   z-index: 10000 !important;
 }
 
+/* ===================== TARGETING MODE ===================== */
+
+/* Global crosshair when in targeting mode */
+body.targeting-mode,
+body.targeting-mode * {
+  cursor: crosshair !important;
+}
+
+/* Pulsing highlight on the source card while awaiting a target */
+body.targeting-mode [data-card-id] .tcg-card {
+  box-shadow: 0 0 0 2px rgba(255, 80, 30, 0.7), 0 0 12px rgba(255, 80, 30, 0.4);
+  transition: box-shadow 0.15s ease;
+}
+
+/* Flowing dash animation on targeting arrows */
+@keyframes arrow-dash {
+  from { stroke-dashoffset: 40; }
+  to   { stroke-dashoffset: 0; }
+}
+
+.arrow-flow {
+  animation: arrow-dash 0.5s linear infinite;
+}
+
 /* Lifted appearance for the floating DragOverlay card */
 [data-is-drag-overlay] .tcg-card {
   transform: rotate(2deg) scale(1.06);

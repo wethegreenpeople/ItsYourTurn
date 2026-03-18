@@ -1,4 +1,4 @@
-import { createEffect, createSignal, For, JSX, Show } from "solid-js";
+import { createEffect, createSignal, For, JSX, onCleanup, Show } from "solid-js";
 import {
   DragDropProvider,
   DragDropSensors,
@@ -16,6 +16,8 @@ import { gameState, initGame } from "./stores/gameStore";
 import { GameHeader } from "./components/GameHeader";
 import { CardContextMenu } from "./components/CardContextMenu";
 import { previewState, hidePreview } from "./stores/cardPreviewStore";
+import { ArrowOverlay } from "./components/ArrowOverlay";
+import { pendingSource, cancelTargeting } from "./stores/targetingStore";
 
 export const DropZone = (props: { id: string; children: JSX.Element }) => {
   const droppable = createDroppable(props.id);
@@ -70,6 +72,24 @@ function App() {
   const [viewingPlayerId, setViewingPlayerId] = createSignal(gameState.localPlayerId);
   // Auto-switch mobile view to the active player on end turn
   createEffect(() => setViewingPlayerId(gameState.currentTurnPlayerId));
+
+  // Targeting mode: crosshair cursor, Escape or click-away to cancel
+  createEffect(() => {
+    document.body.classList.toggle("targeting-mode", !!pendingSource());
+  });
+  createEffect(() => {
+    if (!pendingSource()) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") cancelTargeting(); };
+    const onDocClick = (e: MouseEvent) => {
+      if (!(e.target as Element).closest("[data-card-id]")) cancelTargeting();
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("click", onDocClick, { capture: true });
+    onCleanup(() => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("click", onDocClick, { capture: true });
+    });
+  });
 
   return (
     <DragDropProvider onDragEnd={plugin.onDragEnd}>
@@ -168,6 +188,9 @@ function App() {
           </Show>
         )}
       </DragOverlay>
+
+      {/* Targeting arrows — live SVG overlay tracking source→target card centers */}
+      <ArrowOverlay />
 
       {/* Card preview — floats near long-press position, transparent backdrop closes it */}
       <Show when={previewState()}>

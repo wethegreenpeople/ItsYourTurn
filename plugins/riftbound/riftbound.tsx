@@ -11,6 +11,7 @@ import { Card } from "../../src/models/Card";
 import { registerPlugin } from "../../src/stores/pluginStore";
 import { freePlaceMode, getDropPointer } from "../../src/stores/freePlaceStore";
 import { getCardPos, setCardPos } from "../../src/stores/cardPositionsStore";
+import { cancelTargeting, isTargeting, startTargeting, stopTargeting } from "../../src/stores/targetingStore";
 
 // Renders cards in sortable snap layout
 const SnapCards = (props: { deckId: string; zone: string }) => (
@@ -56,6 +57,14 @@ export class RiftBound implements Plugin {
   public scoreLabel: string = "Score";
 
   cardActions: CardAction[] = [
+    {
+      label: "Target",
+      action: (id) => startTargeting(id),
+    },
+    {
+      label: "Stop Targeting",
+      action: (id) => stopTargeting(id)
+    },
     {
       label: "Send to Hand",
       action: (id, zoneId) => moveCard(id, `${zoneId.split(':')[0]}:hand`),

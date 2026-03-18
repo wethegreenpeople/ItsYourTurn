@@ -3,6 +3,7 @@ import { createSignal } from "solid-js";
 import { Card } from "../models/Card";
 import { showContextMenu } from "../stores/contextMenuStore";
 import { showPreview } from "../stores/cardPreviewStore";
+import { pendingSource, completeTarget } from "../stores/targetingStore";
 
 export const PALETTES = [
   { top: '#2d1b4e', bot: '#0e0818', artA: '#3d1f6e', artB: '#180830', symbol: '✦' },
@@ -61,6 +62,7 @@ export const CardComponent = (props: { card: Card; zoneId: string }) => {
   let startX = 0, startY = 0;
 
   const onPointerDown = (e: PointerEvent) => {
+    if (pendingSource()) return; // don't start long-press while targeting
     startX = e.clientX;
     startY = e.clientY;
     pressTimer = setTimeout(() => {
@@ -82,8 +84,10 @@ export const CardComponent = (props: { card: Card; zoneId: string }) => {
   return (
     <div
       use:sortable={sortable}
+      data-card-id={props.card.id}
       class="card-drag-wrapper"
       style={{ "touch-action": "none" }}
+      onClick={(e) => { if (pendingSource()) { e.stopPropagation(); completeTarget(props.card.id); } }}
       onPointerDown={onPointerDown}
       onPointerUp={cancelPress}
       onPointerLeave={cancelPress}
