@@ -132,6 +132,9 @@ export class RiftBound implements Plugin {
     registerDeck(new Deck(`${p}:PlayedRunes`));
     registerDeck(new Deck(`${p}:mainDeck`));
     registerDeck(new Deck(`${p}:discard`));
+    registerDeck(new Deck(`${p}:trash`));
+    registerDeck(new Deck(`${p}:champion`));
+    registerDeck(new Deck(`${p}:legend`));
 
     // Starting hand
     hand.addCard(new Card("Draven"));
@@ -146,7 +149,7 @@ export class RiftBound implements Plugin {
       {
         id: `${p}:battlefield`,
         className: "zone-battlefield",
-        region: { xStart: 1, xFinish: 13, yStart: 1, yFinish: 4 },
+        region: { xStart: 1, xFinish: 11, yStart: 1, yFinish: 4 },
         content: () => (
           <DropZone id={`${p}:battlefield`}>
             <div class="zone-inner">
@@ -157,14 +160,61 @@ export class RiftBound implements Plugin {
         ),
       },
       {
+        id: `${p}:legend`,
+        className: "zone-battlefield",
+        region: { xStart: 11, xFinish: 12, yStart: 1, yFinish: 4 },
+        content: () => (
+          <DropZone id={`${p}:legend`}>
+            <div class="zone-inner">
+              <span class="zone-label">Legend</span>
+              <ZoneCards deckId={`${p}:legend`} zone={`${p}:legend`} />
+            </div>
+          </DropZone>
+        ),
+      },
+      {
+        id: `${p}:champion`,
+        className: "zone-battlefield",
+        region: { xStart: 12, xFinish: 13, yStart: 1, yFinish: 4 },
+        content: () => (
+          <DropZone id={`${p}:champion`}>
+            <div class="zone-inner">
+              <span class="zone-label">Champion</span>
+              <ZoneCards deckId={`${p}:champion`} zone={`${p}:champion`} />
+            </div>
+          </DropZone>
+        ),
+      },
+      {
         id: `${p}:base`,
         className: "zone-base",
-        region: { xStart: 1, xFinish: 13, yStart: 4, yFinish: 7 },
+        region: { xStart: 1, xFinish: 12, yStart: 4, yFinish: 7 },
         content: () => (
           <DropZone id={`${p}:base`}>
             <div class="zone-inner">
               <span class="zone-label">Base</span>
               <ZoneCards deckId={`${p}:base`} zone={`${p}:base`} />
+            </div>
+          </DropZone>
+        ),
+      },
+      {
+        id: `${p}:mainDeck`,
+        className: "zone-deck",
+        region: { xStart: 12, xFinish: 13, yStart: 4, yFinish: 7 },
+        content: () => (
+          <DropZone id={`${p}:mainDeck`}>
+            <div
+              class="deck-zone deck-zone--clickable"
+              onClick={() => moveTopCard(`${p}:mainDeck`, `${p}:hand`)}
+              title="Main Deck — click to draw"
+            >
+              <div class="deck-stack-wrap">
+                <div class="deck-card-back" />
+                <div class="deck-card-back" />
+                <div class="deck-card-back" />
+                <span class="deck-count-overlay">{cardsInDeck(`${p}:mainDeck`).length}</span>
+              </div>
             </div>
           </DropZone>
         ),
@@ -204,21 +254,21 @@ export class RiftBound implements Plugin {
         ),
       },
       {
-        id: `${p}:mainDeck`,
+        id: `${p}:trash`,
         className: "zone-deck",
         region: { xStart: 12, xFinish: 13, yStart: 7, yFinish: 9 },
         content: () => (
-          <DropZone id={`${p}:mainDeck`}>
+          <DropZone id={`${p}:trash`}>
             <div
               class="deck-zone deck-zone--clickable"
-              onClick={() => moveTopCard(`${p}:mainDeck`, `${p}:hand`)}
-              title="Main Deck — click to draw"
+              onClick={() => moveTopCard(`${p}:trash`, `${p}:hand`)}
+              title="Trash Deck — click to draw"
             >
               <div class="deck-stack-wrap">
                 <div class="deck-card-back" />
                 <div class="deck-card-back" />
                 <div class="deck-card-back" />
-                <span class="deck-count-overlay">{cardsInDeck(`${p}:mainDeck`).length}</span>
+                <span class="deck-count-overlay">{cardsInDeck(`${p}:trash`).length}</span>
               </div>
             </div>
           </DropZone>
