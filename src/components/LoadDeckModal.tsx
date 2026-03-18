@@ -1,16 +1,6 @@
 import { createSignal, onCleanup, Show } from "solid-js";
 import { gameState } from "../stores/gameStore";
-import { clearDeck, getDeck } from "../stores/deckStore";
-import { loadDeckFromList } from "../../plugins/riftbound/deckParser";
-
-// Maps deck-list section names to zone id suffixes
-const SECTION_ZONE: Record<string, string> = {
-  Runes: "UnplayedRunes",
-};
-
-function zoneForSection(section: string): string {
-  return SECTION_ZONE[section] ?? "mainDeck";
-}
+import { getActivePlugin } from "../stores/pluginStore";
 
 export const LoadDeckModal = () => {
   const [open, setOpen] = createSignal(false);
@@ -28,37 +18,28 @@ export const LoadDeckModal = () => {
     if (!loading()) setOpen(false);
   }
 
-  // Escape key closes the modal
   function onKeyDown(e: KeyboardEvent) {
     if (e.key === "Escape") closeModal();
   }
 
-  // Register/unregister Escape listener when modal is open
-  const cleanup = () => document.removeEventListener("keydown", onKeyDown);
-  onCleanup(cleanup);
+  onCleanup(() => document.removeEventListener("keydown", onKeyDown));
 
   async function handleLoad() {
     const raw = text().trim();
     if (!raw) return;
+
+    const plugin = getActivePlugin();
+    if (!plugin?.loadDeck) {
+      setErrors(["Active plugin does not support deck loading."]);
+      return;
+    }
 
     setLoading(true);
     setErrors([]);
     document.addEventListener("keydown", onKeyDown);
 
     try {
-      const { sections, errors: errs } = await loadDeckFromList(raw);
-      const pid = gameState.localPlayerId;
-
-      // Clear the zones we're about to populate
-      clearDeck(`${pid}:mainDeck`);
-      clearDeck(`${pid}:UnplayedRunes`);
-
-      for (const { section, cards } of sections) {
-        const deck = getDeck(`${pid}:${zoneForSection(section)}`);
-        if (!deck) continue;
-        for (const card of cards) deck.addCard(card);
-      }
-
+      const { errors: errs } = await plugin.loadDeck(raw, gameState.localPlayerId);
       if (errs.length > 0) {
         setErrors(errs);
       } else {
@@ -68,6 +49,7 @@ export const LoadDeckModal = () => {
       setErrors([String(e)]);
     } finally {
       setLoading(false);
+      document.removeEventListener("keydown", onKeyDown);
     }
   }
 

@@ -1,17 +1,15 @@
-import { Card } from "../../src/models/Card";
-
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-interface ParsedEntry {
+export interface ParsedEntry {
   count: number;
   name?: string;
   riftbound_id?: string;
   section: string;
 }
 
-interface ApiCard {
+export interface ApiCard {
   id: string;
   name: string;
   riftbound_id: string;
@@ -21,16 +19,6 @@ interface ApiCard {
 interface ApiResponse {
   items: ApiCard[];
   total: number;
-}
-
-export interface DeckSection {
-  section: string;
-  cards: Card[];
-}
-
-export interface LoadDeckResult {
-  sections: DeckSection[];
-  errors: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -98,7 +86,13 @@ function parseSectioned(text: string): ParsedEntry[] {
       section = headerMatch[1].trim();
       continue;
     }
-    const m = line.match(/^(\d+)\s+(.+)$/);
+    // Try with parenthetical riftbound ID first: "1 Obelisk of Power (BF-001)"
+    let m = line.match(/^(\d+)\s+(.+?)\s+\(([A-Z]{2,4}-[A-Z0-9]+)\)\s*$/);
+    if (m) {
+      entries.push({ count: parseInt(m[1]), name: m[2].trim(), riftbound_id: m[3], section });
+      continue;
+    }
+    m = line.match(/^(\d+)\s+(.+)$/);
     if (m) entries.push({ count: parseInt(m[1]), name: m[2].trim(), section });
   }
   return entries;
@@ -145,7 +139,7 @@ export function parseDeckList(text: string): ParsedEntry[] {
 }
 
 // ---------------------------------------------------------------------------
-// API
+// API fetchers
 // ---------------------------------------------------------------------------
 
 // In dev the Vite proxy forwards /riftcodex-api/* → https://api.riftcodex.com/*,
@@ -155,24 +149,55 @@ const API_BASE = import.meta.env.DEV
   ? "/riftcodex-api"
   : "https://api.riftcodex.com";
 
-async function fetchByName(name: string): Promise<ApiCard | null> {
-  const url = `${API_BASE}/cards/name?fuzzy=${encodeURIComponent(name)}&size=1`;
+/** Returns true if at least one significant word from the query appears in the result name.
+ *  Prevents obviously wrong fuzzy matches (e.g. "Obelisk of Power" → "Kaisa"). */
+function namesOverlap(searched: string, returned: string): boolean {
+  const significant = searched.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+  if (significant.length === 0) return true;
+  const ret = returned.toLowerCase();
+  return significant.some(w => ret.includes(w));
+}
+
+export async function fetchByName(name: string): Promise<ApiCard | null> {
+  // 1. Exact match first
   try {
-    const res = await fetch(url, { headers: { Accept: "application/json" } });
-    if (!res.ok) return null;
-    const data: ApiResponse = await res.json();
-    return data.items[0] ?? null;
-  } catch {
-    return null;
+    const res = await fetch(
+      `${API_BASE}/cards/name?exact=${encodeURIComponent(name)}`,
+      { headers: { Accept: "application/json" } }
+    );
+    if (res.ok) {
+      const data: ApiResponse = await res.json();
+      if (data.items[0]) return data.items[0];
+    }
+  } catch { /* fall through */ }
+
+  // 2. Fuzzy fallback — try original name and without leading "The "
+  const variants = [name];
+  if (/^the\s/i.test(name)) variants.push(name.replace(/^the\s+/i, ""));
+
+  for (const variant of variants) {
+    try {
+      const res = await fetch(
+        `${API_BASE}/cards/name?fuzzy=${encodeURIComponent(variant)}&size=5`,
+        { headers: { Accept: "application/json" } }
+      );
+      if (!res.ok) continue;
+      const data: ApiResponse = await res.json();
+      for (const card of data.items) {
+        if (namesOverlap(name, card.name)) return card;
+      }
+    } catch { continue; }
   }
+  return null;
 }
 
 /**
  * Fetch a card by its riftbound ID (e.g. "OGN-046").
- * NOTE: This assumes an endpoint at GET /cards/:riftbound_id.
- * Update if the actual endpoint differs.
+ * NOTE: Assumes an endpoint at GET /cards/:riftbound_id — update if it differs.
  */
-async function fetchByRiftboundId(riftbound_id: string): Promise<ApiCard | null> {
+export async function fetchByRiftboundId(
+  riftbound_id: string
+): Promise<ApiCard | null> {
   const url = `${API_BASE}/cards/${encodeURIComponent(riftbound_id)}`;
   try {
     const res = await fetch(url, { headers: { Accept: "application/json" } });
@@ -182,68 +207,4 @@ async function fetchByRiftboundId(riftbound_id: string): Promise<ApiCard | null>
   } catch {
     return null;
   }
-}
-
-// ---------------------------------------------------------------------------
-// Public loader
-// ---------------------------------------------------------------------------
-
-/**
- * Parse a deck list string, fetch card data from the riftcodex API for every
- * unique card, then return the full Card[] grouped by section.
- *
- * Parallel fetching is used to minimise load time.
- */
-export async function loadDeckFromList(text: string): Promise<LoadDeckResult> {
-  const entries = parseDeckList(text);
-  const errors: string[] = [];
-
-  // Build a map of unique lookup keys → resolved ApiCard
-  // Key: riftbound_id when available, otherwise card name
-  const resolved = new Map<string, ApiCard | null>();
-  for (const entry of entries) {
-    const key = entry.riftbound_id ?? entry.name ?? "";
-    if (key && !resolved.has(key)) resolved.set(key, null);
-  }
-
-  // Fetch all unique cards in parallel
-  await Promise.all(
-    Array.from(resolved.keys()).map(async (key) => {
-      // Find the original entry to know whether to search by name or id
-      const entry = entries.find(e => (e.riftbound_id ?? e.name ?? "") === key)!;
-      let apiCard: ApiCard | null = null;
-
-      if (entry.name) {
-        apiCard = await fetchByName(entry.name);
-      }
-      if (!apiCard && entry.riftbound_id) {
-        apiCard = await fetchByRiftboundId(entry.riftbound_id);
-      }
-
-      if (!apiCard) {
-        errors.push(`Could not find card: "${key}"`);
-      }
-      resolved.set(key, apiCard);
-    })
-  );
-
-  // Expand entries into Card instances, preserving section grouping
-  const sectionMap = new Map<string, Card[]>();
-  for (const entry of entries) {
-    const key = entry.riftbound_id ?? entry.name ?? "";
-    const apiCard = resolved.get(key);
-    if (!apiCard) continue;
-
-    if (!sectionMap.has(entry.section)) sectionMap.set(entry.section, []);
-    const bucket = sectionMap.get(entry.section)!;
-    for (let i = 0; i < entry.count; i++) {
-      bucket.push(new Card(apiCard.name, apiCard.media.image_url));
-    }
-  }
-
-  const sections: DeckSection[] = Array.from(sectionMap.entries()).map(
-    ([section, cards]) => ({ section, cards })
-  );
-
-  return { sections, errors };
 }

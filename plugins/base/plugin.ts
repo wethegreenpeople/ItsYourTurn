@@ -76,6 +76,13 @@ export interface Plugin {
    * fromZoneId and toZoneId are the deck IDs involved.
    */
   onCardMoved?: (cardId: string, fromZoneId: string, toZoneId: string) => void;
+
+  /**
+   * Parse and load a deck list string for a specific player.
+   * The plugin is responsible for routing cards to the correct zones.
+   * Returns any card names/IDs that couldn't be resolved.
+   */
+  loadDeck?: (text: string, playerId: string) => Promise<{ errors: string[] }>;
 }
 
 export interface PlayArea {
