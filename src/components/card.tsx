@@ -37,15 +37,9 @@ export const CardVisual = (props: { card: Card; tapped?: boolean; dragging?: boo
       }}
     >
       <div class="card-inner">
-        <div class="card-header">
-          <span class="card-name">{props.card.name}</span>
-        </div>
-        <div class="card-art">
-          <div class="card-art-sheen" />
-          <div class="card-art-symbol">{palette.symbol}</div>
-        </div>
+        <img src={`${props.card.image}`}></img>
         <div class="card-footer">
-          <span class="card-type">Unit</span>
+          <span class="card-type">{props.card.name}</span>
         </div>
       </div>
     </div>

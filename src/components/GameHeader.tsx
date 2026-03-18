@@ -7,6 +7,7 @@ import {
   type Player,
 } from "../stores/gameStore";
 import { freePlaceMode, setFreePlaceMode } from "../stores/freePlaceStore";
+import { LoadDeckModal } from "./LoadDeckModal";
 
 const PlayerPanel = (props: { player: Player }) => {
   const isLocalPlayer = () => props.player.id === gameState.localPlayerId;
@@ -78,6 +79,7 @@ export const GameHeader = () => {
             <span class="freeplace-icon">{freePlaceMode() ? "⊠" : "⊞"}</span>
             <span class="freeplace-label">{freePlaceMode() ? "Snap" : "Free"}</span>
           </button>
+          <LoadDeckModal />
           <button
             class="msg-toggle-btn"
             classList={{ "msg-toggle-btn--open": gameState.showMessaging }}

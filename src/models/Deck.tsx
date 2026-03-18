@@ -25,6 +25,10 @@ export class Deck {
     return card;
   }
 
+  clear() {
+    this.setCards([]);
+  }
+
   insertCard(card: Card, beforeId?: string) {
     if (!beforeId) {
       this.addCard(card);

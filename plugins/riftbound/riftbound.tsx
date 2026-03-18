@@ -133,10 +133,6 @@ export class RiftBound implements Plugin {
     registerDeck(new Deck(`${p}:mainDeck`));
     registerDeck(new Deck(`${p}:discard`));
 
-    // Starting hand
-    hand.addCard(new Card("Draven"));
-    hand.addCard(new Card("Yasuo"));
-    hand.addCard(new Card("Ahri"));
   }
 
   /** Returns the zone layout for a specific player, using player-scoped deck IDs. */

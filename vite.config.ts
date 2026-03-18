@@ -18,6 +18,13 @@ export default defineConfig(async () => ({
     port: 1420,
     strictPort: true,
     host: host || false,
+    proxy: {
+      "/riftcodex-api": {
+        target: "https://api.riftcodex.com",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/riftcodex-api/, ""),
+      },
+    },
     hmr: host
       ? {
           protocol: "ws",
