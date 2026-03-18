@@ -56,6 +56,10 @@ export function clearDeck(deckId: string) {
   getDeck(deckId)?.clear();
 }
 
+export function shuffleDeck(deckId: string) {
+  getDeck(deckId)?.shuffle();
+}
+
 /** Move a card to the front (top) of a deck. */
 export function moveCardToTop(cardId: string, toDeckId: string) {
   const sourceDeck = findDeckForCard(cardId);

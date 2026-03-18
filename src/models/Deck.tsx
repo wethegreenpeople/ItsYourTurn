@@ -29,6 +29,15 @@ export class Deck {
     this.setCards([]);
   }
 
+  shuffle() {
+    const arr = [...this.cards];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    this.setCards(arr);
+  }
+
   insertCard(card: Card, beforeId?: string) {
     if (!beforeId) {
       this.addCard(card);
