@@ -9,24 +9,29 @@ import { cardsInDeck, moveCard, moveCardAt, moveCardToTop, moveTopCard, register
 import { Deck } from "../../src/models/Deck";
 import { Card } from "../../src/models/Card";
 import { registerPlugin } from "../../src/stores/pluginStore";
+import { viewingPlayerId } from "../../src/stores/boardViewStore";
+import { loadRiftboundDeck } from "./deckLoader";
+import { showDeckContextMenu } from "../../src/stores/deckContextMenuStore";
 import { freePlaceMode, getDropPointer } from "../../src/stores/freePlaceStore";
 import { getCardPos, setCardPos } from "../../src/stores/cardPositionsStore";
 import { startTargeting, stopTargeting } from "../../src/stores/targetingStore";
 import { findDeckForCard } from "../../src/stores/deckStore";
 import { showPreview } from "../../src/stores/cardPreviewStore";
+import { getSelectedIds, clearSelection } from "../../src/stores/selectionStore";
+import { setFaceDown, toggleFaceDown, toggleHorizontal } from "../../src/stores/cardStateStore";
 
 // Renders cards in sortable snap layout
-const SnapCards = (props: { deckId: string; zone: string }) => (
+const SnapCards = (props: { deckId: string; zone: string; horizontal?: boolean }) => (
   <SortableProvider ids={cardsInDeck(props.deckId).map(c => c.id)}>
     <For each={cardsInDeck(props.deckId)}>
-      {(card) => <CardComponent card={card} zoneId={props.zone} />}
+      {(card) => <CardComponent card={card} zoneId={props.zone} horizontal={props.horizontal} />}
     </For>
   </SortableProvider>
 );
 
 // Renders cards freely positioned by (x%, y%) stored in cardPositionsStore.
 // SortableProvider is required so createSortable has context and cards remain draggable.
-const FreeCards = (props: { deckId: string; zone: string }) => (
+const FreeCards = (props: { deckId: string; zone: string; horizontal?: boolean }) => (
   <SortableProvider ids={cardsInDeck(props.deckId).map(c => c.id)}>
     <For each={cardsInDeck(props.deckId)}>
       {(card) => (
@@ -37,7 +42,7 @@ const FreeCards = (props: { deckId: string; zone: string }) => (
             top: `${getCardPos(card.id)?.y ?? 20}%`,
           }}
         >
-          <CardComponent card={card} zoneId={props.zone} />
+          <CardComponent card={card} zoneId={props.zone} horizontal={props.horizontal} />
         </div>
       )}
     </For>
@@ -45,10 +50,16 @@ const FreeCards = (props: { deckId: string; zone: string }) => (
 );
 
 // Zone cards area that switches between snap and free-place based on global toggle
-const ZoneCards = (props: { deckId: string; zone: string }) => (
-  <div class="zone-cards" classList={{ "zone-cards--free": freePlaceMode() }}>
-    <Show when={freePlaceMode()} fallback={<SnapCards deckId={props.deckId} zone={props.zone} />}>
-      <FreeCards deckId={props.deckId} zone={props.zone} />
+const ZoneCards = (props: { deckId: string; zone: string; horizontal?: boolean }) => (
+  <div
+    class="zone-cards"
+    classList={{
+      "zone-cards--free": freePlaceMode(),
+      "zone-cards--empty": cardsInDeck(props.deckId).length === 0,
+    }}
+  >
+    <Show when={freePlaceMode()} fallback={<SnapCards deckId={props.deckId} zone={props.zone} horizontal={props.horizontal} />}>
+      <FreeCards deckId={props.deckId} zone={props.zone} horizontal={props.horizontal} />
     </Show>
   </div>
 );
@@ -78,6 +89,21 @@ export class RiftBound implements Plugin {
       action: (id) => stopTargeting(id)
     },
     {
+      label: "Play Hidden",
+      action: (id, zoneId) => {
+        setFaceDown(id, true);
+        moveCard(id, `${zoneId.split(':')[0]}:base`);
+      },
+    },
+    {
+      label: "Flip",
+      action: (id) => toggleFaceDown(id),
+    },
+    {
+      label: "Toggle Horizontal",
+      action: (id) => toggleHorizontal(id),
+    },
+    {
       label: "Send to Hand",
       action: (id, zoneId) => moveCard(id, `${zoneId.split(':')[0]}:hand`),
     },
@@ -98,8 +124,12 @@ export class RiftBound implements Plugin {
       action: (id, zoneId) => moveCard(id, `${zoneId.split(':')[0]}:UnplayedRunes`),
     },
     {
-      label: "Discard",
-      action: (id, zoneId) => moveCard(id, `${zoneId.split(':')[0]}:discard`),
+      label: "Send to Sideboard",
+      action: (id, zoneId) => moveCard(id, `${zoneId.split(':')[0]}:sideboard`),
+    },
+    {
+      label: "Trash",
+      action: (id, zoneId) => moveCard(id, `${zoneId.split(':')[0]}:trash`),
     },
   ];
 
@@ -121,6 +151,10 @@ export class RiftBound implements Plugin {
     registerPlugin(this);
   }
 
+  loadDeck(text: string, playerId: string) {
+    return loadRiftboundDeck(text, playerId);
+  }
+
   /** Creates all decks for a single player, scoped by playerId. */
   registerPlayer(playerId: string): void {
     const p = playerId;
@@ -131,11 +165,10 @@ export class RiftBound implements Plugin {
     registerDeck(new Deck(`${p}:UnplayedRunes`));
     registerDeck(new Deck(`${p}:PlayedRunes`));
     registerDeck(new Deck(`${p}:mainDeck`));
-    registerDeck(new Deck(`${p}:discard`));
     registerDeck(new Deck(`${p}:trash`));
     registerDeck(new Deck(`${p}:champion`));
     registerDeck(new Deck(`${p}:legend`));
-
+    registerDeck(new Deck(`${p}:sideboard`));
   }
 
   /** Returns the zone layout for a specific player, using player-scoped deck IDs. */
@@ -203,7 +236,9 @@ export class RiftBound implements Plugin {
             <div
               class="deck-zone deck-zone--clickable"
               onClick={() => moveTopCard(`${p}:mainDeck`, `${p}:hand`)}
-              title="Main Deck — click to draw"
+              onContextMenu={(e) => { e.preventDefault(); showDeckContextMenu(e.clientX, e.clientY, `${p}:mainDeck`); }}
+              onMouseDown={(e) => { if (e.button === 0) e.preventDefault(); }}
+              title="Main Deck — click to draw, right-click for options"
             >
               <div class="deck-stack-wrap">
                 <div class="deck-card-back" />
@@ -224,7 +259,9 @@ export class RiftBound implements Plugin {
             <div
               class="deck-zone deck-zone--clickable"
               onClick={() => moveTopCard(`${p}:UnplayedRunes`, `${p}:PlayedRunes`)}
-              title="Rune Deck — click to reveal top card"
+              onContextMenu={(e) => { e.preventDefault(); showDeckContextMenu(e.clientX, e.clientY, `${p}:UnplayedRunes`); }}
+              onMouseDown={(e) => { if (e.button === 0) e.preventDefault(); }}
+              title="Rune Deck — click to reveal top card, right-click for options"
             >
               <div class="deck-stack-wrap">
                 <div class="deck-card-back" />
@@ -258,7 +295,9 @@ export class RiftBound implements Plugin {
             <div
               class="deck-zone deck-zone--clickable"
               onClick={() => moveTopCard(`${p}:trash`, `${p}:hand`)}
-              title="Trash Deck — click to draw"
+              onContextMenu={(e) => { e.preventDefault(); showDeckContextMenu(e.clientX, e.clientY, `${p}:trash`); }}
+              onMouseDown={(e) => { if (e.button === 0) e.preventDefault(); }}
+              title="Trash — click to take top card to hand, right-click for options"
             >
               <div class="deck-stack-wrap">
                 <div class="deck-card-back" />
@@ -274,31 +313,73 @@ export class RiftBound implements Plugin {
   }
 
   onDragEnd: DragEventHandler = ({ draggable, droppable }) => {
-    if (!draggable || !droppable) return;
+    if (!draggable) return;
 
-    const targetId = droppable.id as string;
-    const targetData = droppable.data as { card?: Card; zoneId?: string } | null;
+    const cardId = draggable.id as string;
+    const { x: px, y: py } = getDropPointer();
+
+    // solid-dnd caches droppable rects at drag-start, so zones that were
+    // hidden (display:none) when the drag began — e.g. the opponent's board on
+    // mobile — are never detected even after the board switches mid-drag.
+    // Strategy:
+    // 1. Hit-test with elementsFromPoint + .closest("[data-zone]") traversal so
+    //    we find the zone even when the pointer is over a nested child element.
+    // 2. If that yields no zone, or the zone belongs to the wrong player,
+    //    scan every zone panel of the currently-viewed player by bounding rect.
+    //    This handles the case where the pointer is still at the screen edge
+    //    (where the board-switch triggered) rather than over a specific zone.
+    let hitZoneId: string | undefined;
+    for (const el of document.elementsFromPoint(px, py)) {
+      const panel = (el as HTMLElement).closest?.("[data-zone]") as HTMLElement | null;
+      if (panel?.dataset.zone) { hitZoneId = panel.dataset.zone; break; }
+    }
+
+    const viewedPlayer = viewingPlayerId();
+    if (!hitZoneId || hitZoneId.split(":")[0] !== viewedPlayer) {
+      // Rect-scan fallback: find whichever visible zone of the viewed player
+      // contains the pointer.
+      const panels = document.querySelectorAll(`[data-zone^="${viewedPlayer}:"]`);
+      for (const panel of Array.from(panels)) {
+        const rect = (panel as HTMLElement).getBoundingClientRect();
+        if (rect.width === 0 && rect.height === 0) continue; // hidden
+        if (px >= rect.left && px <= rect.right && py >= rect.top && py <= rect.bottom) {
+          hitZoneId = (panel as HTMLElement).dataset.zone;
+          break;
+        }
+      }
+    }
+
+    const targetId = hitZoneId ?? (droppable?.id as string | undefined);
+    if (!targetId) return;
+
+    const targetData = droppable?.data as { card?: Card; zoneId?: string } | null;
+
+    // Multi-select: move all selected cards to the target zone
+    const selected = getSelectedIds();
+    if (selected.size > 1 && selected.has(cardId)) {
+      selected.forEach(id => moveCard(id, targetId));
+      clearSelection();
+      return;
+    }
 
     if (freePlaceMode()) {
-      // In free-place mode: move card to zone then store pointer-relative position
-      const zoneEl = droppable.node as HTMLElement;
-      const zoneRect = zoneEl.getBoundingClientRect();
-      const { x: px, y: py } = getDropPointer();
-      const relX = Math.max(5, Math.min(90, ((px - zoneRect.left) / zoneRect.width) * 100));
-      const relY = Math.max(5, Math.min(90, ((py - zoneRect.top) / zoneRect.height) * 100));
-
-      const cardId = draggable.id as string;
+      // Prefer the live zone element for rect calculation; fall back to droppable.node
+      const zoneEl = (document.querySelector(`[data-zone="${targetId}"]`) as HTMLElement | null)
+        ?? (droppable?.node as HTMLElement | undefined);
+      if (zoneEl) {
+        const zoneRect = zoneEl.getBoundingClientRect();
+        const relX = Math.max(5, Math.min(90, ((px - zoneRect.left) / zoneRect.width) * 100));
+        const relY = Math.max(5, Math.min(90, ((py - zoneRect.top) / zoneRect.height) * 100));
+        moveCard(cardId, targetId);
+        setCardPos(cardId, relX, relY);
+      } else {
+        moveCard(cardId, targetId);
+      }
+    } else {
       if (targetData?.card && targetData?.zoneId) {
         moveCardAt(cardId, targetData.zoneId, targetId);
       } else {
         moveCard(cardId, targetId);
-      }
-      setCardPos(cardId, relX, relY);
-    } else {
-      if (targetData?.card && targetData?.zoneId) {
-        moveCardAt(draggable.id as string, targetData.zoneId, targetId);
-      } else {
-        moveCard(draggable.id as string, targetId);
       }
     }
   };
