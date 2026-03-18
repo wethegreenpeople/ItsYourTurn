@@ -1,8 +1,12 @@
 import { createSortable } from "@thisbeyond/solid-dnd";
-import { createSignal } from "solid-js";
+import { createSignal, Show } from "solid-js";
 import { Card } from "../models/Card";
 import { showContextMenu } from "../stores/contextMenuStore";
-import { pendingSource, completeTarget } from "../stores/targetingStore";
+import { pendingSource, completeTarget, arrows } from "../stores/targetingStore";
+import { isSelected, getSelectedIds, clearSelection } from "../stores/selectionStore";
+import { isFaceDown, isHorizontal } from "../stores/cardStateStore";
+import { findDeckForCard } from "../stores/deckStore";
+import { gameState } from "../stores/gameStore";
 
 export const PALETTES = [
   { top: '#2d1b4e', bot: '#0e0818', artA: '#3d1f6e', artB: '#180830', symbol: '✦' },
@@ -20,7 +24,14 @@ export function hashName(name: string): number {
 }
 
 // Pure visual — used in both CardComponent and DragOverlay
-export const CardVisual = (props: { card: Card; tapped?: boolean; dragging?: boolean }) => {
+export const CardVisual = (props: {
+  card: Card;
+  tapped?: boolean;
+  dragging?: boolean;
+  selected?: boolean;
+  faceDown?: boolean;
+  horizontal?: boolean;
+}) => {
   const palette = PALETTES[hashName(props.card.name) % PALETTES.length];
   return (
     <div
@@ -28,6 +39,9 @@ export const CardVisual = (props: { card: Card; tapped?: boolean; dragging?: boo
       classList={{
         "is-tapped": !!props.tapped,
         "is-dragging": !!props.dragging,
+        "is-selected": !!props.selected,
+        "is-facedown": !!props.faceDown,
+        "tcg-card--horizontal": !!props.horizontal,
       }}
       style={{
         "--card-top": palette.top,
@@ -37,7 +51,7 @@ export const CardVisual = (props: { card: Card; tapped?: boolean; dragging?: boo
       }}
     >
       <div class="card-inner">
-        <img src={`${props.card.image}`}></img>
+        <img src={`${props.card.image}`} draggable="false" />
         <div class="card-footer">
           <span class="card-type">{props.card.name}</span>
         </div>
@@ -46,20 +60,46 @@ export const CardVisual = (props: { card: Card; tapped?: boolean; dragging?: boo
   );
 };
 
+// Returns the player name that this card is sending an arrow TO across board boundaries, or null.
+function crossPlayerOutgoing(cardId: string): string | null {
+  const outgoing = arrows.find(a => a.sourceId === cardId);
+  if (!outgoing) return null;
+  const sourcePlayer = findDeckForCard(cardId)?.id.split(":")[0];
+  const targetPlayer = findDeckForCard(outgoing.targetId)?.id.split(":")[0];
+  if (!targetPlayer || targetPlayer === sourcePlayer) return null;
+  return gameState.players.find(p => p.id === targetPlayer)?.name ?? targetPlayer;
+}
+
+// Returns the player name that is targeting this card from another board, or null.
+function crossPlayerIncoming(cardId: string): string | null {
+  const incoming = arrows.find(a => a.targetId === cardId);
+  if (!incoming) return null;
+  const targetPlayer = findDeckForCard(cardId)?.id.split(":")[0];
+  const sourcePlayer = findDeckForCard(incoming.sourceId)?.id.split(":")[0];
+  if (!sourcePlayer || sourcePlayer === targetPlayer) return null;
+  return gameState.players.find(p => p.id === sourcePlayer)?.name ?? sourcePlayer;
+}
+
 // Interactive card — thin wrapper that owns drag/sort + tap state
-export const CardComponent = (props: { card: Card; zoneId: string }) => {
+export const CardComponent = (props: { card: Card; zoneId: string; horizontal?: boolean }) => {
   const sortable = createSortable(props.card.id, { card: props.card, zoneId: props.zoneId });
   const [tapped, setTapped] = createSignal(false);
+  // Zone prop (all cards in that zone are horizontal) OR per-card state from store
+  const effectiveHorizontal = () => !!props.horizontal || isHorizontal(props.card.id);
+  const outgoing = () => crossPlayerOutgoing(props.card.id);
+  const incoming = () => crossPlayerIncoming(props.card.id);
 
   let pressTimer: ReturnType<typeof setTimeout> | null = null;
   let startX = 0, startY = 0;
+  let lastTapTime = 0, lastTapX = 0, lastTapY = 0;
 
   const onPointerDown = (e: PointerEvent) => {
-    if (pendingSource()) return; // don't start long-press while targeting
+    if (pendingSource()) return;
     startX = e.clientX;
     startY = e.clientY;
     pressTimer = setTimeout(() => {
       pressTimer = null;
+      lastTapTime = 0; // prevent post-menu tap being treated as double-tap
       showContextMenu(startX, startY, props.card.id, props.zoneId);
     }, 600);
   };
@@ -74,21 +114,43 @@ export const CardComponent = (props: { card: Card; zoneId: string }) => {
     }
   };
 
+  const onPointerUp = (e: PointerEvent) => {
+    cancelPress();
+    if (pendingSource()) return;
+    const now = Date.now();
+    const dx = Math.abs(e.clientX - lastTapX);
+    const dy = Math.abs(e.clientY - lastTapY);
+    if (now - lastTapTime < 300 && dx < 20 && dy < 20) {
+      setTapped(t => !t);
+      lastTapTime = 0;
+    } else {
+      lastTapTime = now;
+      lastTapX = e.clientX;
+      lastTapY = e.clientY;
+    }
+  };
+
   return (
     <div
       use:sortable={sortable}
       data-card-id={props.card.id}
       class="card-drag-wrapper"
       style={{ "touch-action": "none" }}
-      onClick={(e) => { if (pendingSource()) { e.stopPropagation(); completeTarget(props.card.id); } }}
+      onDragStart={(e) => e.preventDefault()}
+      onClick={(e) => {
+        if (pendingSource()) { e.stopPropagation(); completeTarget(props.card.id); return; }
+        // Clicking an unselected card while a multi-selection is active clears the selection
+        if (getSelectedIds().size > 1 && !isSelected(props.card.id)) clearSelection();
+      }}
       onPointerDown={onPointerDown}
-      onPointerUp={cancelPress}
+      onPointerUp={onPointerUp}
       onPointerLeave={cancelPress}
       onPointerMove={onPointerMove}
-      onDblClick={() => setTapped(t => !t)}
       onContextMenu={(e) => {
         e.preventDefault();
         cancelPress();
+        // Suppress context menu when multiple cards are selected
+        if (getSelectedIds().size > 1) return;
         showContextMenu(e.clientX, e.clientY, props.card.id, props.zoneId);
       }}
     >
@@ -96,7 +158,16 @@ export const CardComponent = (props: { card: Card; zoneId: string }) => {
         card={props.card}
         tapped={tapped()}
         dragging={sortable.isActiveDraggable}
+        selected={isSelected(props.card.id)}
+        faceDown={isFaceDown(props.card.id)}
+        horizontal={effectiveHorizontal()}
       />
+      <Show when={outgoing()}>
+        <div class="cross-player-badge cross-player-badge--out">→ {outgoing()}</div>
+      </Show>
+      <Show when={incoming()}>
+        <div class="cross-player-badge cross-player-badge--in">← {incoming()}</div>
+      </Show>
     </div>
   );
 };
