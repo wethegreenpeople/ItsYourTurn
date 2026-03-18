@@ -52,8 +52,8 @@ const ZoneCards = (props: { deckId: string; zone: string }) => (
 
 export class RiftBound implements Plugin {
   public id: string = "riftbound";
-  public startingScore: number = 20;
-  public scoreLabel: string = "HP";
+  public startingScore: number = 0;
+  public scoreLabel: string = "Score";
 
   cardActions: CardAction[] = [
     {
