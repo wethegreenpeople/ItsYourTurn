@@ -10,10 +10,8 @@ interface PluginInfo {
 }
 
 const plugins: PluginInfo[] = Object.entries(pluginModules).map(([path, mod]: [string, any]) => {
-  const parts = path.split("/");
-  const id = parts[parts.length - 2];
   const data = mod.default ?? mod;
-  return { id, name: data.name ?? id, maxPlayers: data.maxPlayers ?? 4 };
+  return { id: data.name, name: data.name ?? "Unknown", maxPlayers: data.maxPlayers ?? 4 };
 });
 
 function generateCode(): string {
