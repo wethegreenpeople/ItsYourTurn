@@ -1,5 +1,6 @@
 import { createStore } from "solid-js/store";
 import { getActivePlugin } from "./pluginStore";
+import { broadcastGameState } from "../utils/socket";
 
 export class GameState {
   constructor(
@@ -19,7 +20,6 @@ export interface Player {
 const [gameState, setGameState] = createStore<GameState>({
   players: [
     { id: "p1", name: "Player 1", score: 20 },
-    { id: "p2", name: "Player 2", score: 20 },
   ] as Player[],
   currentTurnPlayerId: "p1",
   localPlayerId: "p1",
@@ -54,4 +54,9 @@ export function endTurn() {
 
 export function toggleMessaging() {
   setGameState("showMessaging", (v) => !v);
+}
+
+export function addPlayer(player: Player) {
+  setGameState("players", [...gameState.players, player]);
+  broadcastGameState();
 }

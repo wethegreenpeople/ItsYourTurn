@@ -7,6 +7,7 @@ import { createSignal, Show } from "solid-js";
 import App from "./App";
 import { LandingPage } from "./components/LandingPage";
 import { hostRoom, joinRoom } from "./utils/socket";
+import { addPlayer } from "./stores/gameStore";
 
 function Root() {
   const [gameStarted, setGameStarted] = createSignal(false);
@@ -18,6 +19,7 @@ function Root() {
 
   function handleJoinGame(roomCode: string) {
     joinRoom(roomCode);
+    addPlayer({ id: "p2", name: "ASS", score: 20 });
     setGameStarted(true);
   }
 

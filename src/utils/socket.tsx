@@ -10,6 +10,9 @@ export function hostRoom(roomCode: string) {
     .on('broadcast', { event: 'request_state' }, () => {
       channel?.send({ type: 'broadcast', event: 'game_state', payload: { ...gameState } });
     })
+    .on('broadcast', { event: 'game_state' }, ({ payload }) => {
+      setGameState(payload);
+    })
     .subscribe((status) => {
       console.log(`Hosting room ${roomCode}:`, status);
     });
