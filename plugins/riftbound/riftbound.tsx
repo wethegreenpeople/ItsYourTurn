@@ -18,7 +18,7 @@ import { startTargeting, stopTargeting } from "../../src/stores/targetingStore";
 import { findDeckForCard } from "../../src/stores/deckStore";
 import { showPreview } from "../../src/stores/cardPreviewStore";
 import { getSelectedIds, clearSelection } from "../../src/stores/selectionStore";
-import { setFaceDown, toggleFaceDown, toggleHorizontal } from "../../src/stores/cardStateStore";
+import { setFaceDown, toggleFaceDown, toggleHorizontal, toggleTapped } from "../../src/stores/cardStateStore";
 
 // Renders cards in sortable snap layout
 const SnapCards = (props: { deckId: string; zone: string; horizontal?: boolean }) => (
@@ -87,6 +87,10 @@ export class RiftBound implements Plugin {
     {
       label: "Stop Targeting",
       action: (id) => stopTargeting(id)
+    },
+    {
+      label: "Tap / Untap",
+      action: (id) => toggleTapped(id),
     },
     {
       label: "Play Hidden",

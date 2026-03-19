@@ -1,10 +1,10 @@
 import { createSortable } from "@thisbeyond/solid-dnd";
-import { createSignal, Show } from "solid-js";
+import { Show } from "solid-js";
 import { Card } from "../models/Card";
 import { showContextMenu } from "../stores/contextMenuStore";
 import { pendingSource, completeTarget, arrows } from "../stores/targetingStore";
-import { isSelected, getSelectedIds, clearSelection } from "../stores/selectionStore";
-import { isFaceDown, isHorizontal } from "../stores/cardStateStore";
+import { isSelected, isSelectMode, getSelectedIds, clearSelection, toggleSelected } from "../stores/selectionStore";
+import { isFaceDown, isHorizontal, isTapped, toggleTapped } from "../stores/cardStateStore";
 import { findDeckForCard } from "../stores/deckStore";
 import { gameState } from "../stores/gameStore";
 
@@ -83,7 +83,6 @@ function crossPlayerIncoming(cardId: string): string | null {
 // Interactive card — thin wrapper that owns drag/sort + tap state
 export const CardComponent = (props: { card: Card; zoneId: string; horizontal?: boolean }) => {
   const sortable = createSortable(props.card.id, { card: props.card, zoneId: props.zoneId });
-  const [tapped, setTapped] = createSignal(false);
   // Zone prop (all cards in that zone are horizontal) OR per-card state from store
   const effectiveHorizontal = () => !!props.horizontal || isHorizontal(props.card.id);
   const outgoing = () => crossPlayerOutgoing(props.card.id);
@@ -92,6 +91,8 @@ export const CardComponent = (props: { card: Card; zoneId: string; horizontal?: 
   let pressTimer: ReturnType<typeof setTimeout> | null = null;
   let startX = 0, startY = 0;
   let lastTapTime = 0, lastTapX = 0, lastTapY = 0;
+  // Prevents the click that fires after a long-press from toggling selection
+  let suppressNextClick = false;
 
   const onPointerDown = (e: PointerEvent) => {
     if (pendingSource()) return;
@@ -99,7 +100,8 @@ export const CardComponent = (props: { card: Card; zoneId: string; horizontal?: 
     startY = e.clientY;
     pressTimer = setTimeout(() => {
       pressTimer = null;
-      lastTapTime = 0; // prevent post-menu tap being treated as double-tap
+      lastTapTime = 0;
+      suppressNextClick = true;
       showContextMenu(startX, startY, props.card.id, props.zoneId);
     }, 600);
   };
@@ -121,7 +123,11 @@ export const CardComponent = (props: { card: Card; zoneId: string; horizontal?: 
     const dx = Math.abs(e.clientX - lastTapX);
     const dy = Math.abs(e.clientY - lastTapY);
     if (now - lastTapTime < 300 && dx < 20 && dy < 20) {
-      setTapped(t => !t);
+      const selected = getSelectedIds();
+      const ids = selected.size > 1 && selected.has(props.card.id)
+        ? Array.from(selected)
+        : [props.card.id];
+      ids.forEach(id => toggleTapped(id));
       lastTapTime = 0;
     } else {
       lastTapTime = now;
@@ -138,7 +144,15 @@ export const CardComponent = (props: { card: Card; zoneId: string; horizontal?: 
       style={{ "touch-action": "none" }}
       onDragStart={(e) => e.preventDefault()}
       onClick={(e) => {
+        if (suppressNextClick) { suppressNextClick = false; return; }
         if (pendingSource()) { e.stopPropagation(); completeTarget(props.card.id); return; }
+
+        // In select mode: tap toggles this card in/out of the selection
+        if (isSelectMode()) {
+          toggleSelected(props.card.id);
+          return;
+        }
+
         // Clicking an unselected card while a multi-selection is active clears the selection
         if (getSelectedIds().size > 1 && !isSelected(props.card.id)) clearSelection();
       }}
@@ -149,14 +163,12 @@ export const CardComponent = (props: { card: Card; zoneId: string; horizontal?: 
       onContextMenu={(e) => {
         e.preventDefault();
         cancelPress();
-        // Suppress context menu when multiple cards are selected
-        if (getSelectedIds().size > 1) return;
         showContextMenu(e.clientX, e.clientY, props.card.id, props.zoneId);
       }}
     >
       <CardVisual
         card={props.card}
-        tapped={tapped()}
+        tapped={isTapped(props.card.id)}
         dragging={sortable.isActiveDraggable}
         selected={isSelected(props.card.id)}
         faceDown={isFaceDown(props.card.id)}

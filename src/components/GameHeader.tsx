@@ -1,4 +1,4 @@
-import { For, Show } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 import {
   gameState,
   adjustScore,
@@ -31,22 +31,22 @@ const PlayerPanel = (props: { player: Player }) => {
         </Show>
       </div>
       <div class="player-panel-score">
-        <span class="score-label">{gameState.scoreLabel}</span>
-        <button
-          class="score-btn"
-          onClick={() => adjustScore(props.player.id, -1)}
-          aria-label="Decrease score"
-        >
-          −
-        </button>
-        <span class="score-value">{props.player.score}</span>
-        <button
-          class="score-btn"
-          onClick={() => adjustScore(props.player.id, 1)}
-          aria-label="Increase score"
-        >
-          +
-        </button>
+        <div class="score-row">
+          <span class="score-label">{gameState.scoreLabel}</span>
+          <span class="score-value">{props.player.score}</span>
+        </div>
+        <div class="score-controls">
+          <button
+            class="score-btn"
+            onClick={() => adjustScore(props.player.id, -1)}
+            aria-label="Decrease score"
+          >−</button>
+          <button
+            class="score-btn"
+            onClick={() => adjustScore(props.player.id, 1)}
+            aria-label="Increase score"
+          >+</button>
+        </div>
       </div>
     </div>
   );
@@ -54,17 +54,50 @@ const PlayerPanel = (props: { player: Player }) => {
 
 export const GameHeader = () => {
   const isMyTurn = () => gameState.currentTurnPlayerId === gameState.localPlayerId;
+  const [menuOpen, setMenuOpen] = createSignal(false);
+  const closeMenu = () => setMenuOpen(false);
+
+  const sideboardCount = () =>
+    cardsInDeck(`${gameState.localPlayerId}:sideboard`).length;
 
   return (
     <aside class="game-sidebar">
-      {/* Horizontal row: players + actions. Drawer sits BELOW this, not inside it. */}
       <div class="sidebar-toprow">
+        {/* ── Row 1: player score panels ── */}
         <div class="sidebar-players">
           <For each={gameState.players}>
             {(player) => <PlayerPanel player={player} />}
           </For>
         </div>
 
+        {/* ── Row 2 (mobile only): primary actions + hamburger ── */}
+        <div class="sidebar-quickbar">
+          <button
+            class="end-turn-btn"
+            classList={{ "end-turn-btn--ready": isMyTurn() }}
+            onClick={endTurn}
+          >
+            <span class="end-turn-label">End Turn</span>
+          </button>
+          <button
+            class="msg-toggle-btn"
+            classList={{ "msg-toggle-btn--open": gameState.showMessaging }}
+            onClick={toggleMessaging}
+            aria-label="Toggle chat"
+          >
+            ✉
+          </button>
+          <button
+            class="menu-btn"
+            classList={{ "menu-btn--open": menuOpen() }}
+            onClick={() => setMenuOpen(v => !v)}
+            aria-label="More options"
+          >
+            ☰
+          </button>
+        </div>
+
+        {/* ── Desktop-only: all actions in a column ── */}
         <div class="sidebar-actions">
           <button
             class="end-turn-btn"
@@ -83,16 +116,14 @@ export const GameHeader = () => {
             <span class="freeplace-label">{freePlaceMode() ? "Snap" : "Free"}</span>
           </button>
           <LoadDeckModal />
-          <Show when={cardsInDeck(`${gameState.localPlayerId}:sideboard`).length > 0}>
+          <Show when={sideboardCount() > 0}>
             <button
               class="sideboard-btn"
               onClick={() => openDeckSearch(`${gameState.localPlayerId}:sideboard`, "Sideboard")}
               title="View sideboard"
             >
               <span class="sideboard-icon">⧉</span>
-              <span class="sideboard-label">
-                Sideboard ({cardsInDeck(`${gameState.localPlayerId}:sideboard`).length})
-              </span>
+              <span class="sideboard-label">Sideboard ({sideboardCount()})</span>
             </button>
           </Show>
           <button
@@ -106,7 +137,35 @@ export const GameHeader = () => {
         </div>
       </div>
 
-      {/* Drawer renders below the toprow — never inside the horizontal row */}
+      {/* ── Hamburger dropdown (mobile only) ── */}
+      <Show when={menuOpen()}>
+        <div class="menu-backdrop" onClick={closeMenu} />
+        <div class="sidebar-menu-dropdown">
+          <button
+            class="freeplace-btn"
+            classList={{ "freeplace-btn--active": freePlaceMode() }}
+            onClick={() => { setFreePlaceMode(v => !v); closeMenu(); }}
+          >
+            <span class="freeplace-icon">{freePlaceMode() ? "⊠" : "⊞"}</span>
+            <span class="freeplace-label">{freePlaceMode() ? "Snap Layout" : "Free Layout"}</span>
+          </button>
+          <LoadDeckModal onClose={closeMenu} />
+          <Show when={sideboardCount() > 0}>
+            <button
+              class="sideboard-btn"
+              onClick={() => {
+                openDeckSearch(`${gameState.localPlayerId}:sideboard`, "Sideboard");
+                closeMenu();
+              }}
+            >
+              <span class="sideboard-icon">⧉</span>
+              <span class="sideboard-label">Sideboard ({sideboardCount()})</span>
+            </button>
+          </Show>
+        </div>
+      </Show>
+
+      {/* ── Messaging drawer ── */}
       <Show when={gameState.showMessaging}>
         <div class="messaging-drawer">
           <div class="messaging-inner">

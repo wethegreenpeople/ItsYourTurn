@@ -1,5 +1,5 @@
 import { createSignal, onCleanup, Show } from "solid-js";
-import { setSelection, clearSelection } from "../stores/selectionStore";
+import { setSelection, clearSelection, isSelectMode } from "../stores/selectionStore";
 import { pendingSource } from "../stores/targetingStore";
 
 export const SelectionBox = () => {
@@ -11,6 +11,20 @@ export const SelectionBox = () => {
     if (e.button !== 0) return;
     if (pendingSource()) return;
     const target = e.target as Element;
+
+    // Touch devices use long-press select mode instead of rubber-band
+    if (e.pointerType === "touch") {
+      if (
+        isSelectMode() &&
+        !target.closest("[data-card-id]") &&
+        !target.closest("button") &&
+        !target.closest(".context-menu")
+      ) {
+        clearSelection();
+      }
+      return;
+    }
+
     if (
       target.closest("[data-card-id]") ||
       target.closest("button") ||

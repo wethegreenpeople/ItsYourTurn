@@ -2,7 +2,7 @@ import { createSignal, onCleanup, Show } from "solid-js";
 import { gameState } from "../stores/gameStore";
 import { getActivePlugin } from "../stores/pluginStore";
 
-export const LoadDeckModal = () => {
+export const LoadDeckModal = (props: { onClose?: () => void } = {}) => {
   const [open, setOpen] = createSignal(false);
   const [text, setText] = createSignal("");
   const [loading, setLoading] = createSignal(false);
@@ -12,6 +12,7 @@ export const LoadDeckModal = () => {
     setText("");
     setErrors([]);
     setOpen(true);
+    props.onClose?.(); // close the hamburger menu when the modal opens
   }
 
   function closeModal() {
