@@ -1,11 +1,6 @@
 import { createStore } from "solid-js/store";
 import { getActivePlugin } from "./pluginStore";
-
-export interface Player {
-  id: string;
-  name: string;
-  score: number;
-}
+import { Player } from "../models/GameState";
 
 const [gameState, setGameState] = createStore({
   players: [

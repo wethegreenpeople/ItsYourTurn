@@ -1,4 +1,5 @@
 import { createMemo, createSignal, For, Show } from "solid-js";
+import { uuid4 } from "../utils/uuid";
 
 // Load all plugin info.json files at build time
 const pluginModules = import.meta.glob("../../plugins/**/info.json", { eager: true });
@@ -19,7 +20,7 @@ function generateCode(): string {
 }
 
 interface LandingPageProps {
-  onHostGame: (pluginId: string, playerCount: number, roomCode: string) => void;
+  onHostGame: (pluginId: string, playerCount: number, roomCode: string, playerId: string) => void;
   onJoinGame: (roomCode: string) => void;
 }
 
@@ -32,6 +33,7 @@ export function LandingPage(props: LandingPageProps) {
   const [joinChars, setJoinChars] = createSignal(["", "", "", ""]);
 
   const currentPlugin = createMemo(() => plugins.find((p) => p.id === selectedPlugin()) ?? plugins[0]);
+  const playerId = createMemo(() => uuid4());
   const joinCode = () => joinChars().join("");
 
   const handleJoinInput = (index: number, value: string) => {
@@ -299,7 +301,7 @@ export function LandingPage(props: LandingPageProps) {
 
             {/* CTA */}
             <button
-              onClick={() => { props.onHostGame(selectedPlugin(), playerCount(), roomCode()); setShowHost(false); }}
+              onClick={() => { props.onHostGame(selectedPlugin(), playerCount(), roomCode(), playerId()); setShowHost(false); }}
               class="w-full mt-6 py-4 rounded-xl font-cinzel font-bold text-[.95rem] tracking-[.12em] uppercase cursor-pointer transition-all duration-200 text-obsidian border-none"
               style="background:linear-gradient(135deg,#c9a84c 0%,#a8873d 100%);box-shadow:0 4px 24px rgba(201,168,76,.28),inset 0 1px 0 rgba(255,255,255,.15)"
             >
