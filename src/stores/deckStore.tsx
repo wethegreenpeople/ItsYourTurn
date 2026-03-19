@@ -5,8 +5,6 @@ import { getActivePlugin } from "./pluginStore";
 export const Decks: Deck[] = [];
 
 export function registerDeck(deck: Deck) {
-  console.log("hallo");
-  console.log(JSON.stringify(Decks));
   Decks.push(deck);
 }
 

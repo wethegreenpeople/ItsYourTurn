@@ -1,8 +1,22 @@
 import { createStore } from "solid-js/store";
 import { getActivePlugin } from "./pluginStore";
-import { Player } from "../models/GameState";
 
-const [gameState, setGameState] = createStore({
+export class GameState {
+  constructor(
+    public players: Player[],
+    public currentTurnPlayerId: string,
+    public localPlayerId: string,
+    public scoreLabel: string,
+    public showMessaging: boolean,
+  ) { }
+}
+export interface Player {
+  id: string;
+  name: string;
+  score: number;
+}
+
+const [gameState, setGameState] = createStore<GameState>({
   players: [
     { id: "p1", name: "Player 1", score: 20 },
     { id: "p2", name: "Player 2", score: 20 },
@@ -13,7 +27,7 @@ const [gameState, setGameState] = createStore({
   showMessaging: false,
 });
 
-export { gameState };
+export { gameState, setGameState };
 
 export function initGame(startingScore: number, scoreLabel: string = "HP") {
   setGameState("scoreLabel", scoreLabel);
