@@ -1,4 +1,4 @@
-import { createEffect, For, JSX, onCleanup, Show } from "solid-js";
+import { createEffect, createMemo, For, JSX, onCleanup, Show } from "solid-js";
 import {
   DragDropProvider,
   DragDropSensors,
@@ -38,26 +38,34 @@ export const DropZone = (props: { id: string; children: JSX.Element }) => {
   );
 };
 
-function App() {
+function App(props: { isHost?: boolean }) {
   const plugin: Plugin = Plugins.filter(s => s.id === "riftbound")[0];
 
   // Set active plugin so lifecycle hooks work from deckStore/gameStore
   setActivePlugin(plugin);
 
-  // Register each player and build their board areas.
-  // Local player is sorted last so their board renders at the bottom.
-  const playerBoards = gameState.players
-    .map((p) => {
-      plugin.registerPlayer(p.id);
-      return { playerId: p.id, areas: plugin.createPlayerAreas(p.id) };
-    })
-    .sort((a, b) =>
-      a.playerId === gameState.localPlayerId ? 1
-        : b.playerId === gameState.localPlayerId ? -1
-        : 0
-    );
+  // Track registered players so registerPlayer/createPlayerAreas only run once per player.
+  const registeredPlayers = new Map<string, { playerId: string; areas: ReturnType<Plugin["createPlayerAreas"]> }>();
 
-  initGame(plugin.startingScore ?? 20, plugin.scoreLabel ?? "HP");
+  const playerBoards = createMemo(() =>
+    gameState.players
+      .map((p) => {
+        if (!registeredPlayers.has(p.id)) {
+          plugin.registerPlayer(p.id);
+          registeredPlayers.set(p.id, { playerId: p.id, areas: plugin.createPlayerAreas(p.id) });
+        }
+        return registeredPlayers.get(p.id)!;
+      })
+      .sort((a, b) =>
+        a.playerId === gameState.localPlayerId ? 1
+          : b.playerId === gameState.localPlayerId ? -1
+          : 0
+      )
+  );
+
+  if (props.isHost) {
+    initGame(plugin.startingScore ?? 20, plugin.scoreLabel ?? "HP");
+  }
   plugin.onGameStart?.(gameState.players.map(p => ({ id: p.id, name: p.name })));
 
   const t = plugin.theme ?? {};
@@ -144,7 +152,7 @@ function App() {
                 : "1.6fr 1fr",
             }}
           >
-            <For each={playerBoards}>
+            <For each={playerBoards()}>
               {({ playerId, areas }) => (
                 <div
                   class="player-board"

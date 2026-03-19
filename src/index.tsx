@@ -11,9 +11,11 @@ import { addPlayer } from "./stores/gameStore";
 
 function Root() {
   const [gameStarted, setGameStarted] = createSignal(false);
+  const [isHost, setIsHost] = createSignal(false);
 
   function handleHostGame(roomCode: string) {
     hostRoom(roomCode);
+    setIsHost(true);
     setGameStarted(true);
   }
 
@@ -30,7 +32,7 @@ function Root() {
         onJoinGame={handleJoinGame}
       />
     }>
-      <App />
+      <App isHost={isHost()} />
     </Show>
   );
 }
