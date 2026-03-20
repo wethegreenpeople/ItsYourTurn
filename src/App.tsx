@@ -47,21 +47,28 @@ function App(props: { isHost?: boolean }) {
   // Track registered players so registerPlayer/createPlayerAreas only run once per player.
   const registeredPlayers = new Map<string, { playerId: string; areas: ReturnType<Plugin["createPlayerAreas"]> }>();
 
-  const playerBoards = createMemo(() =>
-    gameState.players
-      .map((p) => {
-        if (!registeredPlayers.has(p.id)) {
-          plugin.registerPlayer(p.id);
-          registeredPlayers.set(p.id, { playerId: p.id, areas: plugin.createPlayerAreas(p.id) });
-        }
-        return registeredPlayers.get(p.id)!;
-      })
-      .sort((a, b) =>
-        a.playerId === currentPlayer()?.id ? 1
-          : b.playerId === currentPlayer()?.id ? -1
-          : 0
-      )
-  );
+  const playerBoards = createMemo(() => {
+    const mapped = gameState.players.map((p) => {
+      if (!registeredPlayers.has(p.id)) {
+        plugin.registerPlayer(p.id);
+        registeredPlayers.set(p.id, { playerId: p.id, areas: plugin.createPlayerAreas(p.id) });
+      }
+      return registeredPlayers.get(p.id)!;
+    });
+
+    // Always place local player at index 1 (bottom-left in the column-flow grid).
+    // Grid fills: index 0 = top-left, index 1 = bottom-left, index 2 = top-right, etc.
+    const localIdx = mapped.findIndex(b => b.playerId === currentPlayer()?.id);
+    if (localIdx > 1) {
+      const [local] = mapped.splice(localIdx, 1);
+      mapped.splice(1, 0, local);
+    } else if (localIdx === 0 && mapped.length > 1) {
+      const [local] = mapped.splice(0, 1);
+      mapped.splice(1, 0, local);
+    }
+
+    return mapped;
+  });
 
   if (props.isHost) {
     initGame(plugin.startingScore ?? 20, plugin.scoreLabel ?? "Doot");
