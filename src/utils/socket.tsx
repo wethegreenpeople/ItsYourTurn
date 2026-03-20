@@ -1,7 +1,6 @@
 import { supabase } from "./supabase";
-import { gameState } from "../stores/gameStore";
+import { gameState, setGameState } from "../stores/gameStore";
 import type { RealtimeChannel } from "@supabase/supabase-js";
-import { setGameStateFromPlayer } from "../stores/gameStore";
 
 let channel: RealtimeChannel | null = null;
 
@@ -12,8 +11,7 @@ export function hostRoom(roomCode: string) {
       channel?.send({ type: 'broadcast', event: 'game_state', payload: { ...gameState } });
     })
     .on('broadcast', { event: 'game_state' }, ({ payload }) => {
-      const localId = gameState.localPlayerId;
-      setGameStateFromPlayer(payload, localId);
+      setGameState(payload);
     })
     .subscribe((status) => {
       console.log(`Hosting room ${roomCode}:`, status);
@@ -24,8 +22,7 @@ export function joinRoom(roomCode: string, onSubscribed?: () => void) {
   channel = supabase
     .channel(`room:${roomCode}`)
     .on('broadcast', { event: 'game_state' }, ({ payload }) => {
-      const localId = gameState.localPlayerId;
-      setGameStateFromPlayer(payload, localId);
+      setGameState(payload);
     })
     .subscribe((status) => {
       if (status === 'SUBSCRIBED') {

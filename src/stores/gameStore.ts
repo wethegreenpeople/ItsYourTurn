@@ -6,7 +6,6 @@ export class GameState {
   constructor(
     public players: Player[],
     public currentTurnPlayerId: string,
-    public localPlayerId: string,
     public scoreLabel: string,
     public showMessaging: boolean,
   ) { }
@@ -17,17 +16,15 @@ export interface Player {
   score: number;
 }
 
+const [currentPlayer, setCurrentPlayer] = createStore<Player>({ id: "p1", name: "Player 1", score: 20 });
 const [gameState, setGameState] = createStore<GameState>({
-  players: [
-    { id: "p1", name: "Player 1", score: 20 },
-  ] as Player[],
-  currentTurnPlayerId: "p1",
-  localPlayerId: "p1",
+  players: [{ ...currentPlayer }] as Player[],
+  currentTurnPlayerId: currentPlayer.id,
   scoreLabel: "HP",
   showMessaging: false,
 });
 
-export { gameState };
+export { gameState, setGameState, currentPlayer, setCurrentPlayer };
 
 export function initGame(startingScore: number, scoreLabel: string = "HP") {
   setGameState("scoreLabel", scoreLabel);
@@ -59,13 +56,8 @@ export function toggleMessaging() {
   setGameState("showMessaging", (v) => !v);
 }
 
-export function addPlayer(player: Player) {
+export function joinAsPlayer(player: Player) {
   setGameState("players", [...gameState.players, player]);
-  setGameState("localPlayerId", player.id);
+  setCurrentPlayer(player);
   broadcastGameState();
-}
-
-export function setGameStateFromPlayer(gameState: GameState, playerId: string) {
-  setGameState(gameState);
-  setGameState("localPlayerId", playerId);
 }
