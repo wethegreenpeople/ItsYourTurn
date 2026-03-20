@@ -1,5 +1,5 @@
 import { createSignal, onCleanup, Show } from "solid-js";
-import { gameState } from "../stores/gameStore";
+import { myUserId } from "../stores/gameStore";
 import { getActivePlugin } from "../stores/pluginStore";
 
 export const LoadDeckModal = (props: { onClose?: () => void } = {}) => {
@@ -40,7 +40,7 @@ export const LoadDeckModal = (props: { onClose?: () => void } = {}) => {
     document.addEventListener("keydown", onKeyDown);
 
     try {
-      const { errors: errs } = await plugin.loadDeck(raw, gameState.localPlayerId);
+      const { errors: errs } = await plugin.loadDeck(raw, myUserId);
       if (errs.length > 0) {
         setErrors(errs);
       } else {

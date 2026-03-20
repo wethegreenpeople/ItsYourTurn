@@ -4,6 +4,7 @@ import {
   adjustScore,
   endTurn,
   toggleMessaging,
+  myUserId,
   type Player,
 } from "../stores/gameStore";
 import { freePlaceMode, setFreePlaceMode } from "../stores/freePlaceStore";
@@ -12,7 +13,7 @@ import { cardsInDeck } from "../stores/deckStore";
 import { openDeckSearch } from "../stores/deckContextMenuStore";
 
 const PlayerPanel = (props: { player: Player }) => {
-  const isLocalPlayer = () => props.player.id === gameState.localPlayerId;
+  const isLocalPlayer = () => props.player.id === myUserId;
   const isCurrentTurn = () => props.player.id === gameState.currentTurnPlayerId;
 
   return (
@@ -53,12 +54,12 @@ const PlayerPanel = (props: { player: Player }) => {
 };
 
 export const GameHeader = () => {
-  const isMyTurn = () => gameState.currentTurnPlayerId === gameState.localPlayerId;
+  const isMyTurn = () => gameState.currentTurnPlayerId === myUserId;
   const [menuOpen, setMenuOpen] = createSignal(false);
   const closeMenu = () => setMenuOpen(false);
 
   const sideboardCount = () =>
-    cardsInDeck(`${gameState.localPlayerId}:sideboard`).length;
+    cardsInDeck(`${myUserId}:sideboard`).length;
 
   return (
     <aside class="game-sidebar">
@@ -119,7 +120,7 @@ export const GameHeader = () => {
           <Show when={sideboardCount() > 0}>
             <button
               class="sideboard-btn"
-              onClick={() => openDeckSearch(`${gameState.localPlayerId}:sideboard`, "Sideboard")}
+              onClick={() => openDeckSearch(`${myUserId}:sideboard`, "Sideboard")}
               title="View sideboard"
             >
               <span class="sideboard-icon">⧉</span>
@@ -154,7 +155,7 @@ export const GameHeader = () => {
             <button
               class="sideboard-btn"
               onClick={() => {
-                openDeckSearch(`${gameState.localPlayerId}:sideboard`, "Sideboard");
+                openDeckSearch(`${myUserId}:sideboard`, "Sideboard");
                 closeMenu();
               }}
             >

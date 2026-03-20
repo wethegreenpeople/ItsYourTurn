@@ -1,7 +1,7 @@
 import { createSignal, createEffect } from "solid-js";
-import { gameState } from "./gameStore";
+import { gameState, myUserId } from "./gameStore";
 
-const [viewingPlayerId, setViewingPlayerId] = createSignal(gameState.localPlayerId);
+const [viewingPlayerId, setViewingPlayerId] = createSignal(myUserId);
 
 // Auto-follow the current turn player (same behaviour that was previously in App.tsx)
 createEffect(() => setViewingPlayerId(gameState.currentTurnPlayerId));
