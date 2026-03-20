@@ -10,9 +10,29 @@ export interface DeckData {
   cards: Card[];
 }
 
+export interface CardState {
+  faceDown?: boolean;
+  horizontal?: boolean;
+  tapped?: boolean;
+}
+
+export interface Arrow {
+  id: string;
+  sourceId: string;
+  targetId: string;
+}
+
+export interface CardPosition {
+  x: number;
+  y: number;
+}
+
 export interface GameState {
   players: Player[];
   decks: DeckData[];
+  cardStates: Record<string, CardState>;
+  arrows: Arrow[];
+  cardPositions: Record<string, CardPosition>;
   currentTurnPlayerId: string;
   scoreLabel: string;
   playerStartingScore: number;
@@ -30,6 +50,9 @@ const [currentPlayer, setCurrentPlayer] = createSignal<Player | null>(null);
 const [gameState, setGameState] = createStore<GameState>({
   players: [],
   decks: [],
+  cardStates: {},
+  arrows: [],
+  cardPositions: {},
   currentTurnPlayerId: "",
   scoreLabel: "HP",
   showMessaging: false,

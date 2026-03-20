@@ -62,7 +62,7 @@ export const CardVisual = (props: {
 
 // Returns the player name that this card is sending an arrow TO across board boundaries, or null.
 function crossPlayerOutgoing(cardId: string): string | null {
-  const outgoing = arrows.find(a => a.sourceId === cardId);
+  const outgoing = arrows().find(a => a.sourceId === cardId);
   if (!outgoing) return null;
   const sourcePlayer = findDeckForCard(cardId)?.id.split(":")[0];
   const targetPlayer = findDeckForCard(outgoing.targetId)?.id.split(":")[0];
@@ -72,7 +72,7 @@ function crossPlayerOutgoing(cardId: string): string | null {
 
 // Returns the player name that is targeting this card from another board, or null.
 function crossPlayerIncoming(cardId: string): string | null {
-  const incoming = arrows.find(a => a.targetId === cardId);
+  const incoming = arrows().find(a => a.targetId === cardId);
   if (!incoming) return null;
   const targetPlayer = findDeckForCard(cardId)?.id.split(":")[0];
   const sourcePlayer = findDeckForCard(incoming.sourceId)?.id.split(":")[0];

@@ -1,10 +1,17 @@
 import { createSignal } from "solid-js";
-import { createStore } from "solid-js/store";
+import { gameState, setGameState } from "./gameStore";
+import type { Arrow } from "./gameStore";
+import { broadcastGameState } from "../utils/socket";
 
-export type Arrow = { id: string; sourceId: string; targetId: string };
-
+// pendingSource is local UI state — only the current client cares which card
+// they're in the process of targeting from.
 const [pendingSource, setPendingSource] = createSignal<string | null>(null);
-const [arrows, setArrows] = createStore<Arrow[]>([]);
+
+export { pendingSource };
+
+// Arrows are read directly from gameState.arrows
+export { type Arrow };
+export const arrows = () => gameState.arrows;
 
 export function startTargeting(cardId: string) {
   setPendingSource(cardId);
@@ -14,11 +21,10 @@ export function completeTarget(targetCardId: string) {
   const sourceId = pendingSource();
   if (!sourceId) return;
   setPendingSource(null);
-  if (sourceId === targetCardId) return; // targeting self = cancel
-  setArrows(prev => [
-    ...prev,
-    { id: `${Date.now()}-${Math.random()}`, sourceId, targetId: targetCardId },
-  ]);
+  if (sourceId === targetCardId) return;
+  const arrow: Arrow = { id: `${Date.now()}-${Math.random()}`, sourceId, targetId: targetCardId };
+  setGameState("arrows", (prev) => [...prev, arrow]);
+  broadcastGameState();
 }
 
 export function cancelTargeting() {
@@ -26,24 +32,20 @@ export function cancelTargeting() {
 }
 
 export function stopTargeting(cardId: string) {
-  const matchingArrows: Arrow[] | null = arrows.filter(s => s.sourceId === cardId) ?? null;
-  if (matchingArrows === null) return;
-  for (let item of matchingArrows) {
-    removeArrow(item.id);
-  }
+  setGameState("arrows", (prev) => prev.filter((a) => a.sourceId !== cardId));
+  broadcastGameState();
 }
 
 export function removeArrow(id: string) {
-  setArrows(a => a.filter(arrow => arrow.id !== id));
+  setGameState("arrows", (prev) => prev.filter((a) => a.id !== id));
+  broadcastGameState();
 }
 
 export function clearArrows() {
-  setArrows([]);
+  setGameState("arrows", []);
+  broadcastGameState();
 }
 
 export function isTargeting(cardId: string) {
-  const arrow: Arrow | null = arrows.find(s => s.sourceId === cardId) ?? null;
-  return arrow === null ? false : true;
+  return gameState.arrows.some((a) => a.sourceId === cardId);
 }
-
-export { pendingSource, arrows };

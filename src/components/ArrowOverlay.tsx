@@ -103,7 +103,7 @@ export const ArrowOverlay = () => (
         <path d="M 0 0 L 7 3.5 L 0 7 Z" fill="rgba(255,60,30,0.95)" />
       </marker>
     </defs>
-    <For each={arrows}>
+    <For each={arrows()}>
       {(arrow) => (
         <ArrowPath sourceId={arrow.sourceId} targetId={arrow.targetId} id={arrow.id} />
       )}
