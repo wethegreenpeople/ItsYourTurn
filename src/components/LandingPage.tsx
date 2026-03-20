@@ -20,8 +20,8 @@ function generateCode(): string {
 }
 
 interface LandingPageProps {
-  onHostGame: (roomCode: string) => void;
-  onJoinGame: (roomCode: string) => void;
+  onHostGame: (roomCode: string, playerName: string) => void;
+  onJoinGame: (roomCode: string, playerName: string) => void;
 }
 
 export function LandingPage(props: LandingPageProps) {
@@ -31,6 +31,13 @@ export function LandingPage(props: LandingPageProps) {
   const [playerCount, setPlayerCount] = createSignal(2);
   const [roomCode] = createSignal(generateCode());
   const [joinChars, setJoinChars] = createSignal(["", "", "", ""]);
+  const [playerName, setPlayerName] = createSignal(localStorage.getItem("tcg-player-name") ?? "");
+
+  const submitName = (name: string) => {
+    const trimmed = name.trim();
+    if (trimmed) localStorage.setItem("tcg-player-name", trimmed);
+    return trimmed || "Player";
+  };
 
   const currentPlugin = createMemo(() => plugins.find((p) => p.id === selectedPlugin()) ?? plugins[0]);
   const playerId = createMemo(() => uuid4());
@@ -216,6 +223,22 @@ export function LandingPage(props: LandingPageProps) {
               <p class="text-arcane-dim/50 text-[.85rem] m-0 tracking-[.06em]">Configure your game</p>
             </div>
 
+            {/* Player name */}
+            <div class="mb-6">
+              <p class="text-gold/75 text-[.72rem] font-bold tracking-[.3em] uppercase mb-2 m-0">Your Name</p>
+              <input
+                type="text"
+                placeholder="Enter your name"
+                maxLength={24}
+                value={playerName()}
+                onInput={(e) => setPlayerName(e.currentTarget.value)}
+                class="w-full rounded-[9px] px-4 py-3 font-rajdhani text-base text-arcane outline-none transition-all duration-150"
+                style="background:rgba(8,10,20,.8);border:1px solid rgba(58,61,84,.8);caret-color:#c9a84c;box-sizing:border-box"
+                onFocus={(e) => (e.currentTarget.style.cssText += ";border-color:#c9a84c;background:rgba(201,168,76,.07);box-shadow:0 0 0 3px rgba(201,168,76,.14)")}
+                onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(58,61,84,.8)"; e.currentTarget.style.background = "rgba(8,10,20,.8)"; e.currentTarget.style.boxShadow = ""; }}
+              />
+            </div>
+
             {/* Room code */}
             <div class="rounded-xl p-5 mb-6 text-center"
                  style="background:rgba(8,10,20,.8);border:1px solid rgba(201,168,76,.18)">
@@ -301,7 +324,7 @@ export function LandingPage(props: LandingPageProps) {
 
             {/* CTA */}
             <button
-              onClick={() => { props.onHostGame(roomCode(), currentPlugin()); setShowHost(false); }}
+              onClick={() => { props.onHostGame(roomCode(), submitName(playerName())); setShowHost(false); }}
               class="w-full mt-6 py-4 rounded-xl font-cinzel font-bold text-[.95rem] tracking-[.12em] uppercase cursor-pointer transition-all duration-200 text-obsidian border-none"
               style="background:linear-gradient(135deg,#c9a84c 0%,#a8873d 100%);box-shadow:0 4px 24px rgba(201,168,76,.28),inset 0 1px 0 rgba(255,255,255,.15)"
             >
@@ -334,6 +357,22 @@ export function LandingPage(props: LandingPageProps) {
               <p class="text-arcane-dim/50 text-[.85rem] m-0 tracking-[.06em]">Enter the four-letter code</p>
             </div>
 
+            {/* Player name */}
+            <div class="mt-6 mb-2">
+              <p class="text-gold/75 text-[.72rem] font-bold tracking-[.3em] uppercase mb-2 m-0">Your Name</p>
+              <input
+                type="text"
+                placeholder="Enter your name"
+                maxLength={24}
+                value={playerName()}
+                onInput={(e) => setPlayerName(e.currentTarget.value)}
+                class="w-full rounded-[9px] px-4 py-3 font-rajdhani text-base text-arcane outline-none transition-all duration-150"
+                style="background:rgba(8,10,20,.8);border:1px solid rgba(58,61,84,.8);caret-color:#c9a84c;box-sizing:border-box"
+                onFocus={(e) => (e.currentTarget.style.cssText += ";border-color:#c9a84c;background:rgba(201,168,76,.07);box-shadow:0 0 0 3px rgba(201,168,76,.14)")}
+                onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(58,61,84,.8)"; e.currentTarget.style.background = "rgba(8,10,20,.8)"; e.currentTarget.style.boxShadow = ""; }}
+              />
+            </div>
+
             {/* Code inputs */}
             <div class="flex gap-3 justify-center my-8">
               <For each={[0, 1, 2, 3]}>
@@ -362,8 +401,8 @@ export function LandingPage(props: LandingPageProps) {
 
             {/* CTA */}
             <button
-              disabled={joinCode().length < 4}
-              onClick={() => { props.onJoinGame(joinCode()); setShowJoin(false); }}
+              disabled={joinCode().length < 4 || !playerName().trim()}
+              onClick={() => { props.onJoinGame(joinCode(), submitName(playerName())); setShowJoin(false); }}
               class="w-full py-4 rounded-xl font-cinzel font-bold text-[.95rem] tracking-[.12em] uppercase transition-all duration-200 text-obsidian border-none disabled:opacity-30 disabled:cursor-not-allowed"
               style="background:linear-gradient(135deg,#c9a84c 0%,#a8873d 100%);box-shadow:0 4px 24px rgba(201,168,76,.28),inset 0 1px 0 rgba(255,255,255,.15);cursor:pointer"
             >
