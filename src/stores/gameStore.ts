@@ -4,6 +4,7 @@ import { broadcastGameState } from "../utils/socket";
 import { createSignal } from "solid-js";
 import { uuid4 } from "../utils/uuid";
 import type { Card } from "../models/Card";
+import { logEvent } from "./chatStore";
 
 export interface DeckData {
   id: string;
@@ -83,6 +84,8 @@ export function adjustScore(playerId: string, delta: number) {
   const idx = gameState.players.findIndex((p) => p.id === playerId);
   if (idx !== -1) {
     setGameState("players", idx, "score", (s) => s + delta);
+    const p = gameState.players[idx];
+    logEvent(`${p.name} ${gameState.scoreLabel} → ${p.score}`, playerId);
   }
   broadcastGameState();
 }
@@ -94,6 +97,8 @@ export function endTurn() {
   getActivePlugin()?.onTurnEnd?.(gameState.currentTurnPlayerId);
   setGameState("currentTurnPlayerId", ids[nextIdx]);
   getActivePlugin()?.onTurnStart?.(ids[nextIdx]);
+  const nextPlayer = gameState.players[nextIdx];
+  logEvent(`${nextPlayer?.name ?? "?"}'s turn begins`, ids[nextIdx]);
   broadcastGameState();
 }
 

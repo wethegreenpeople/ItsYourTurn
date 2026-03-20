@@ -3,6 +3,16 @@ import { gameState, myUserId, addPlayer, applyRemoteState } from "../stores/game
 import type { GameState } from "../stores/gameStore";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
+// Chat message callback — registered by chatStore to avoid circular imports.
+let _chatMessageHandler: ((msg: any) => void) | null = null;
+export function onChatMessage(handler: (msg: any) => void) {
+  _chatMessageHandler = handler;
+}
+
+export function broadcastChatMessage(msg: any) {
+  channel?.send({ type: "broadcast", event: "chat_message", payload: msg });
+}
+
 let channel: RealtimeChannel | null = null;
 
 /**
@@ -37,6 +47,11 @@ export function joinRoom(roomCode: string, onReady?: () => void) {
       if (gameState.players[0]?.id === myUserId) {
         addPlayer(payload.id, payload.name);
       }
+    })
+
+    // Receive a chat message from another client.
+    .on("broadcast", { event: "chat_message" }, ({ payload }) => {
+      _chatMessageHandler?.(payload);
     })
 
     // Receive full game state from any client.

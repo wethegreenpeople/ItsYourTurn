@@ -2,6 +2,8 @@ import { createSignal } from "solid-js";
 import { gameState, setGameState } from "./gameStore";
 import type { Arrow } from "./gameStore";
 import { broadcastGameState } from "../utils/socket";
+import { findDeckForCard } from "./deckStore";
+import { logEvent } from "./chatStore";
 
 // pendingSource is local UI state — only the current client cares which card
 // they're in the process of targeting from.
@@ -24,6 +26,12 @@ export function completeTarget(targetCardId: string) {
   if (sourceId === targetCardId) return;
   const arrow: Arrow = { id: `${Date.now()}-${Math.random()}`, sourceId, targetId: targetCardId };
   setGameState("arrows", (prev) => [...prev, arrow]);
+
+  // Log the targeting event: look up which player owns each card by deck zone prefix.
+  const actorId = findDeckForCard(sourceId)?.id.split(":")[0];
+  const targetId = findDeckForCard(targetCardId)?.id.split(":")[0];
+  logEvent("targeted", actorId, targetId);
+
   broadcastGameState();
 }
 

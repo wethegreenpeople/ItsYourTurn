@@ -11,6 +11,7 @@ import { freePlaceMode, setFreePlaceMode } from "../stores/freePlaceStore";
 import { LoadDeckModal } from "./LoadDeckModal";
 import { cardsInDeck } from "../stores/deckStore";
 import { openDeckSearch } from "../stores/deckContextMenuStore";
+import { MessagingPanel } from "./MessagingPanel";
 
 const PlayerPanel = (props: { player: Player }) => {
   const isLocalPlayer = () => props.player.id === myUserId;
@@ -170,7 +171,7 @@ export const GameHeader = () => {
       <Show when={gameState.showMessaging}>
         <div class="messaging-drawer">
           <div class="messaging-inner">
-            <span class="messaging-label">Chat &amp; Log — coming soon</span>
+            <MessagingPanel />
           </div>
         </div>
       </Show>
