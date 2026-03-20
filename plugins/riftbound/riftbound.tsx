@@ -6,8 +6,7 @@ import { DragEventHandler } from "@thisbeyond/solid-dnd";
 import { SortableProvider } from "@thisbeyond/solid-dnd";
 import { CardComponent } from "../../src/components/card";
 import { cardsInDeck, moveCard, moveCardAt, moveCardToTop, moveTopCard, registerDeck } from "../../src/stores/deckStore";
-import { Deck } from "../../src/models/Deck";
-import { Card } from "../../src/models/Card";
+import type { Card } from "../../src/models/Card";
 import { registerPlugin } from "../../src/stores/pluginStore";
 import { viewingPlayerId } from "../../src/stores/boardViewStore";
 import { loadRiftboundDeck } from "./deckLoader";
@@ -162,17 +161,16 @@ export class RiftBound implements Plugin {
   /** Creates all decks for a single player, scoped by playerId. */
   registerPlayer(playerId: string): void {
     const p = playerId;
-    const hand = new Deck(`${p}:hand`);
-    registerDeck(hand);
-    registerDeck(new Deck(`${p}:battlefield`));
-    registerDeck(new Deck(`${p}:base`));
-    registerDeck(new Deck(`${p}:UnplayedRunes`));
-    registerDeck(new Deck(`${p}:PlayedRunes`));
-    registerDeck(new Deck(`${p}:mainDeck`));
-    registerDeck(new Deck(`${p}:trash`));
-    registerDeck(new Deck(`${p}:champion`));
-    registerDeck(new Deck(`${p}:legend`));
-    registerDeck(new Deck(`${p}:sideboard`));
+    registerDeck(`${p}:hand`);
+    registerDeck(`${p}:battlefield`);
+    registerDeck(`${p}:base`);
+    registerDeck(`${p}:UnplayedRunes`);
+    registerDeck(`${p}:PlayedRunes`);
+    registerDeck(`${p}:mainDeck`);
+    registerDeck(`${p}:trash`);
+    registerDeck(`${p}:champion`);
+    registerDeck(`${p}:legend`);
+    registerDeck(`${p}:sideboard`);
   }
 
   /** Returns the zone layout for a specific player, using player-scoped deck IDs. */

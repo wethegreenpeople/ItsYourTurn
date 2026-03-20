@@ -3,9 +3,16 @@ import { getActivePlugin } from "./pluginStore";
 import { broadcastGameState } from "../utils/socket";
 import { createSignal } from "solid-js";
 import { uuid4 } from "../utils/uuid";
+import type { Card } from "../models/Card";
+
+export interface DeckData {
+  id: string;
+  cards: Card[];
+}
 
 export interface GameState {
   players: Player[];
+  decks: DeckData[];
   currentTurnPlayerId: string;
   scoreLabel: string;
   playerStartingScore: number;
@@ -21,7 +28,8 @@ export interface Player {
 export const myUserId: string = uuid4();
 const [currentPlayer, setCurrentPlayer] = createSignal<Player | null>(null);
 const [gameState, setGameState] = createStore<GameState>({
-  players: [] as Player[],
+  players: [],
+  decks: [],
   currentTurnPlayerId: "",
   scoreLabel: "HP",
   showMessaging: false,
@@ -32,7 +40,6 @@ export { gameState, setGameState, currentPlayer, setCurrentPlayer };
 
 /** Add a player to the local state and broadcast. */
 export function addPlayer(playerId: string, playerName: string) {
-  // Don't add duplicates
   if (gameState.players.some((p) => p.id === playerId)) return;
   const player: Player = { id: playerId, name: playerName, score: gameState.playerStartingScore };
   setGameState("players", gameState.players.length, player);
@@ -79,7 +86,6 @@ export function toggleMessaging() {
 export function applyRemoteState(remote: GameState) {
   setGameState(reconcile(remote));
 
-  // Ensure our local currentPlayer stays in sync
   const me = remote.players.find((p) => p.id === myUserId);
   if (me) setCurrentPlayer(me);
 }

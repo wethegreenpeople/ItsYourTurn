@@ -1,5 +1,5 @@
-import { Card } from "../../src/models/Card";
-import { clearDeck, getDeck } from "../../src/stores/deckStore";
+import { createCard } from "../../src/models/Card";
+import { addCardToDeck, clearDeck } from "../../src/stores/deckStore";
 import { setHorizontal } from "../../src/stores/cardStateStore";
 import { getCachedById, getCachedByName, putCached } from "../../src/lib/cardCache";
 import { parseDeckList, fetchByName, fetchByRiftboundId } from "./deckParser";
@@ -110,13 +110,12 @@ export async function loadRiftboundDeck(
     const card = resolvedMap.get(key);
     if (!card) continue;
 
-    const deck = getDeck(`${playerId}:${zoneForSection(entry.section)}`);
-    if (!deck) continue;
+    const deckId = `${playerId}:${zoneForSection(entry.section)}`;
 
     for (let i = 0; i < entry.count; i++) {
-      const newCard = new Card(card.name, card.image_url);
+      const newCard = createCard(card.name, card.image_url);
       if (entry.section === "Battlefields") setHorizontal(newCard.id, true);
-      deck.addCard(newCard);
+      addCardToDeck(deckId, newCard);
     }
   }
 
