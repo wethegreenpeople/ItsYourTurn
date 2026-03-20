@@ -20,8 +20,7 @@ function Root() {
   }
 
   function handleJoinGame(roomCode: string) {
-    joinRoom(roomCode);
-    addPlayer({ id: "p2", name: "ASS", score: 20 });
+    joinRoom(roomCode, () => addPlayer({ id: "p2", name: "ASS", score: 20 }));
     setGameStarted(true);
   }
 

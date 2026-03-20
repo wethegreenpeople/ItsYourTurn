@@ -27,13 +27,14 @@ const [gameState, setGameState] = createStore<GameState>({
   showMessaging: false,
 });
 
-export { gameState, setGameState };
+export { gameState };
 
 export function initGame(startingScore: number, scoreLabel: string = "HP") {
   setGameState("scoreLabel", scoreLabel);
   gameState.players.forEach((_, idx) => {
     setGameState("players", idx, "score", startingScore);
   });
+  broadcastGameState();
 }
 
 export function adjustScore(playerId: string, delta: number) {
@@ -41,6 +42,7 @@ export function adjustScore(playerId: string, delta: number) {
   if (idx !== -1) {
     setGameState("players", idx, "score", (s) => s + delta);
   }
+  broadcastGameState();
 }
 
 export function endTurn() {
@@ -50,6 +52,7 @@ export function endTurn() {
   getActivePlugin()?.onTurnEnd?.(gameState.currentTurnPlayerId);
   setGameState("currentTurnPlayerId", ids[nextIdx]);
   getActivePlugin()?.onTurnStart?.(ids[nextIdx]);
+  broadcastGameState();
 }
 
 export function toggleMessaging() {
@@ -58,5 +61,11 @@ export function toggleMessaging() {
 
 export function addPlayer(player: Player) {
   setGameState("players", [...gameState.players, player]);
+  setGameState("localPlayerId", player.id);
   broadcastGameState();
+}
+
+export function setGameStateFromPlayer(gameState: GameState, playerId: string) {
+  setGameState(gameState);
+  setGameState("localPlayerId", playerId);
 }
