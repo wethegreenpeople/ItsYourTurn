@@ -6,22 +6,35 @@ import { render } from "solid-js/web";
 import { createSignal, Show } from "solid-js";
 import App from "./App";
 import { LandingPage } from "./components/LandingPage";
-import { hostRoom, joinRoom } from "./utils/socket";
-import { joinAsPlayer } from "./stores/gameStore";
+import { joinRoom, requestJoin } from "./utils/socket";
+import { addPlayer, myUserId, setCurrentPlayer } from "./stores/gameStore";
 
 function Root() {
   const [gameStarted, setGameStarted] = createSignal(false);
   const [isHost, setIsHost] = createSignal(false);
 
   function handleHostGame(roomCode: string) {
-    hostRoom(roomCode);
-    setIsHost(true);
-    setGameStarted(true);
+    // Host adds themselves locally first, then joins the room.
+    addPlayer(myUserId, "Player 1");
+    setCurrentPlayer({ id: myUserId, name: "Player 1", score: 20 });
+
+    joinRoom(roomCode, () => {
+      setIsHost(true);
+      setGameStarted(true);
+    });
   }
 
   function handleJoinGame(roomCode: string) {
-    joinRoom(roomCode, () => joinAsPlayer({ id: "p2", name: "ASS", score: 20 }));
-    setGameStarted(true);
+    // Join the room. Once subscribed, ask the host to add us.
+    // onReady fires after we receive the game state back with us in it.
+    joinRoom(roomCode, () => {
+      setGameStarted(true);
+    });
+    // We need the channel to be set up before requesting join,
+    // so we do it in a microtask to let joinRoom's subscribe fire first.
+    queueMicrotask(() => {
+      requestJoin(myUserId, "Player 2");
+    });
   }
 
   return (

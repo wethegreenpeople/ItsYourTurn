@@ -301,7 +301,7 @@ export function LandingPage(props: LandingPageProps) {
 
             {/* CTA */}
             <button
-              onClick={() => { props.onHostGame(roomCode()); setShowHost(false); }}
+              onClick={() => { props.onHostGame(roomCode(), currentPlugin()); setShowHost(false); }}
               class="w-full mt-6 py-4 rounded-xl font-cinzel font-bold text-[.95rem] tracking-[.12em] uppercase cursor-pointer transition-all duration-200 text-obsidian border-none"
               style="background:linear-gradient(135deg,#c9a84c 0%,#a8873d 100%);box-shadow:0 4px 24px rgba(201,168,76,.28),inset 0 1px 0 rgba(255,255,255,.15)"
             >

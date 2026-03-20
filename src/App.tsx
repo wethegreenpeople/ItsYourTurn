@@ -57,14 +57,14 @@ function App(props: { isHost?: boolean }) {
         return registeredPlayers.get(p.id)!;
       })
       .sort((a, b) =>
-        a.playerId === currentPlayer.id ? 1
-          : b.playerId === currentPlayer.id ? -1
+        a.playerId === currentPlayer()?.id ? 1
+          : b.playerId === currentPlayer()?.id ? -1
           : 0
       )
   );
 
   if (props.isHost) {
-    initGame(plugin.startingScore ?? 20, plugin.scoreLabel ?? "HP");
+    initGame(plugin.startingScore ?? 20, plugin.scoreLabel ?? "Doot");
   }
   plugin.onGameStart?.(gameState.players.map(p => ({ id: p.id, name: p.name })));
 
@@ -86,7 +86,7 @@ function App(props: { isHost?: boolean }) {
   const allCardActions = () => [
     ...(plugin.cardActions ?? []),
     ...gameState.players
-      .filter(p => p.id !== currentPlayer.id)
+      .filter(p => p.id !== currentPlayer()?.id)
       .map(p => ({
         label: `To ${p.name}'s Battlefield`,
         action: (cardId: string) => moveCard(cardId, `${p.id}:battlefield`),
@@ -136,7 +136,7 @@ function App(props: { isHost?: boolean }) {
                     onClick={() => setViewingPlayerId(p.id)}
                     data-player-id={p.id}
                   >
-                    {p.id === currentPlayer.id ? `${p.name} (You)` : p.name}
+                    {p.id === currentPlayer()?.id ? `${p.name} (You)` : p.name}
                   </button>
                 )}
               </For>
@@ -147,7 +147,7 @@ function App(props: { isHost?: boolean }) {
           <div
             class="game-boards-wrapper"
             style={{
-              "--active-rows": gameState.currentTurnPlayerId === currentPlayer.id
+              "--active-rows": gameState.currentTurnPlayerId === currentPlayer()?.id
                 ? "1fr 1.6fr"
                 : "1.6fr 1fr",
             }}
@@ -158,11 +158,11 @@ function App(props: { isHost?: boolean }) {
                   class="player-board"
                   classList={{
                     "player-board--hidden-mobile": viewingPlayerId() !== playerId,
-                    "player-board--local": playerId === currentPlayer.id,
+                    "player-board--local": playerId === currentPlayer()?.id,
                   }}
                 >
                   <div class="player-board-label">
-                    {playerId === currentPlayer.id
+                    {playerId === currentPlayer()?.id
                       ? "Your Board"
                       : gameState.players.find(p => p.id === playerId)?.name ?? playerId}
                   </div>
@@ -191,13 +191,13 @@ function App(props: { isHost?: boolean }) {
 
           {/* Local player's hand — always at the bottom */}
           <div class="hand-dock">
-            <DropZone id={`${currentPlayer.id}:hand`}>
+            <DropZone id={`${currentPlayer()?.id}:hand`}>
               <div class="hand-inner">
                 <span class="zone-label">Hand</span>
                 <div class="hand-cards">
-                  <SortableProvider ids={cardsInDeck(`${currentPlayer.id}:hand`).map(c => c.id)}>
-                    <For each={cardsInDeck(`${currentPlayer.id}:hand`)}>
-                      {(card) => <CardComponent card={card} zoneId={`${currentPlayer.id}:hand`} />}
+                  <SortableProvider ids={cardsInDeck(`${currentPlayer()?.id}:hand`).map(c => c.id)}>
+                    <For each={cardsInDeck(`${currentPlayer()?.id}:hand`)}>
+                      {(card) => <CardComponent card={card} zoneId={`${currentPlayer()?.id}:hand`} />}
                     </For>
                   </SortableProvider>
                 </div>
