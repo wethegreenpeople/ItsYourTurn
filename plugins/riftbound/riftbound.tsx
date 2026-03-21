@@ -18,6 +18,7 @@ import { findDeckForCard } from "../../src/stores/deckStore";
 import { showPreview } from "../../src/stores/cardPreviewStore";
 import { getSelectedIds, clearSelection } from "../../src/stores/selectionStore";
 import { setFaceDown, toggleFaceDown, toggleHorizontal, toggleTapped } from "../../src/stores/cardStateStore";
+import { getPluginSetting } from "../../src/stores/settingsStore";
 
 // Renders cards in sortable snap layout
 const SnapCards = (props: { deckId: string; zone: string; horizontal?: boolean }) => (
@@ -67,6 +68,20 @@ export class RiftBound implements Plugin {
   public id: string = "riftbound";
   public startingScore: number = 0;
   public scoreLabel: string = "Score";
+
+  settings = [
+    {
+      key: 'boardLayout',
+      label: 'Board Layout',
+      description: 'Arrange boards vertically (top/bottom) or side by side',
+      type: 'select' as const,
+      options: [
+        { value: 'vertical', label: 'Vertical' },
+        { value: 'horizontal', label: 'Side by Side' },
+      ],
+      defaultValue: 'vertical',
+    },
+  ];
 
   cardActions: CardAction[] = [
     {
@@ -180,7 +195,7 @@ export class RiftBound implements Plugin {
       {
         id: `${p}:battlefield`,
         className: "zone-battlefield",
-        region: { xStart: 1, xFinish: 11, yStart: 1, yFinish: 4 },
+        region: { xStart: 1, xFinish: getPluginSetting('boardLayout', 'vertical') === 'vertical' ? 11 : 9, yStart: 1, yFinish: 4 },
         content: () => (
           <DropZone id={`${p}:battlefield`}>
             <div class="zone-inner">
@@ -193,7 +208,7 @@ export class RiftBound implements Plugin {
       {
         id: `${p}:legend`,
         className: "zone-battlefield",
-        region: { xStart: 11, xFinish: 12, yStart: 1, yFinish: 4 },
+        region: { xStart: getPluginSetting('boardLayout', 'vertical') === 'vertical' ? 11 : 9, xFinish: getPluginSetting('boardLayout', 'vertical') === 'vertical' ? 12 : 10, yStart: 1, yFinish: 4 },
         content: () => (
           <DropZone id={`${p}:legend`}>
             <div class="zone-inner">
@@ -206,7 +221,7 @@ export class RiftBound implements Plugin {
       {
         id: `${p}:champion`,
         className: "zone-battlefield",
-        region: { xStart: 12, xFinish: 13, yStart: 1, yFinish: 4 },
+        region: { xStart: getPluginSetting('boardLayout', 'vertical') === 'vertical' ? 12 : 10, xFinish: 13, yStart: 1, yFinish: 4 },
         content: () => (
           <DropZone id={`${p}:champion`}>
             <div class="zone-inner">

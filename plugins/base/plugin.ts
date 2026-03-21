@@ -31,6 +31,15 @@ export interface CardAction {
   action: (cardId: string, zoneId: string) => void;
 }
 
+export interface PluginSetting {
+  key: string;
+  label: string;
+  description?: string;
+  type: 'toggle' | 'select';
+  options?: { value: string; label: string }[];
+  defaultValue: boolean | string;
+}
+
 export interface Plugin {
   id: string;
   theme?: PluginTheme;
@@ -41,6 +50,8 @@ export interface Plugin {
   scoreLabel?: string;
   /** Context menu actions available on any card. Plugin-specific. */
   cardActions?: CardAction[];
+  /** Settings this plugin exposes in the Settings panel. */
+  settings?: PluginSetting[];
 
   /**
    * Called once to register the plugin itself. Should only call registerPlugin(this).

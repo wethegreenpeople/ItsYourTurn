@@ -24,6 +24,8 @@ import { pendingSource, cancelTargeting } from "./stores/targetingStore";
 import { SelectionBox } from "./components/SelectionBox";
 import { isHorizontal } from "./stores/cardStateStore";
 import { DragBoardSwitcher } from "./components/DragBoardSwitcher";
+import { SettingsModal } from "./components/SettingsModal";
+import { showZoneLabels, getPluginSetting } from "./stores/settingsStore";
 
 export const DropZone = (props: { id: string; children: JSX.Element }) => {
   const droppable = createDroppable(props.id);
@@ -128,7 +130,15 @@ function App(props: { isHost?: boolean }) {
       <DeckContextMenu />
       <DeckSearchModal />
       <DragBoardSwitcher />
-      <main class="game-root" style={themeVars}>
+      <SettingsModal />
+      <main
+        class="game-root"
+        classList={{
+          "hide-zone-labels": !showZoneLabels(),
+          "board-layout-horizontal": getPluginSetting('boardLayout', 'vertical') === 'horizontal',
+        }}
+        style={themeVars}
+      >
         <GameHeader />
         <div class="game-main">
 

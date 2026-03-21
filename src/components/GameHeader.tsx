@@ -8,6 +8,7 @@ import {
   type Player,
 } from "../stores/gameStore";
 import { freePlaceMode, setFreePlaceMode } from "../stores/freePlaceStore";
+import { setShowSettingsModal } from "../stores/settingsStore";
 import { LoadDeckModal } from "./LoadDeckModal";
 import { cardsInDeck } from "../stores/deckStore";
 import { openDeckSearch } from "../stores/deckContextMenuStore";
@@ -136,36 +137,51 @@ export const GameHeader = () => {
           >
             ✉
           </button>
+          <button
+            class="freeplace-btn"
+            onClick={() => setShowSettingsModal(true)}
+            title="Settings"
+          >
+            <span class="freeplace-icon">⚙</span>
+            <span class="freeplace-label">Settings</span>
+          </button>
         </div>
       </div>
 
       {/* ── Hamburger dropdown (mobile only) ── */}
       <Show when={menuOpen()}>
         <div class="menu-backdrop" onClick={closeMenu} />
-        <div class="sidebar-menu-dropdown">
-          <button
-            class="freeplace-btn"
-            classList={{ "freeplace-btn--active": freePlaceMode() }}
-            onClick={() => { setFreePlaceMode(v => !v); closeMenu(); }}
-          >
-            <span class="freeplace-icon">{freePlaceMode() ? "⊠" : "⊞"}</span>
-            <span class="freeplace-label">{freePlaceMode() ? "Snap Layout" : "Free Layout"}</span>
-          </button>
-          <LoadDeckModal onClose={closeMenu} />
-          <Show when={sideboardCount() > 0}>
-            <button
-              class="sideboard-btn"
-              onClick={() => {
-                openDeckSearch(`${myUserId}:sideboard`, "Sideboard");
-                closeMenu();
-              }}
-            >
-              <span class="sideboard-icon">⧉</span>
-              <span class="sideboard-label">Sideboard ({sideboardCount()})</span>
-            </button>
-          </Show>
-        </div>
       </Show>
+      <div class="sidebar-menu-dropdown" classList={{ "sidebar-menu-dropdown--open": menuOpen() }}>
+        <button
+          class="freeplace-btn"
+          classList={{ "freeplace-btn--active": freePlaceMode() }}
+          onClick={() => { setFreePlaceMode(v => !v); closeMenu(); }}
+        >
+          <span class="freeplace-icon">{freePlaceMode() ? "⊠" : "⊞"}</span>
+          <span class="freeplace-label">{freePlaceMode() ? "Snap Layout" : "Free Layout"}</span>
+        </button>
+        <LoadDeckModal onClose={closeMenu} />
+        <Show when={sideboardCount() > 0}>
+          <button
+            class="sideboard-btn"
+            onClick={() => {
+              openDeckSearch(`${myUserId}:sideboard`, "Sideboard");
+              closeMenu();
+            }}
+          >
+            <span class="sideboard-icon">⧉</span>
+            <span class="sideboard-label">Sideboard ({sideboardCount()})</span>
+          </button>
+        </Show>
+        <button
+          class="freeplace-btn"
+          onClick={() => { setShowSettingsModal(true); closeMenu(); }}
+        >
+          <span class="freeplace-icon">⚙</span>
+          <span class="freeplace-label">Settings</span>
+        </button>
+      </div>
 
       {/* ── Messaging drawer ── */}
       <Show when={gameState.showMessaging}>
