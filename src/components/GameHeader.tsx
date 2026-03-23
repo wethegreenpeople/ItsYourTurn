@@ -8,6 +8,7 @@ import {
   type Player,
 } from "../stores/gameStore";
 import { freePlaceMode, setFreePlaceMode } from "../stores/freePlaceStore";
+import { setShowSettingsModal } from "../stores/settingsStore";
 import { LoadDeckModal } from "./LoadDeckModal";
 import { cardsInDeck } from "../stores/deckStore";
 import { openDeckSearch } from "../stores/deckContextMenuStore";
@@ -117,6 +118,19 @@ export const GameHeader = (props: {
     </button>
   );
 
+  const SettingsBtn = (p: { onClick?: () => void; showLabel?: boolean }) => (
+    <button
+      class={`${actionBtn} hover:border-gold/35 hover:text-gold`}
+      onClick={p.onClick ?? (() => setShowSettingsModal(true))}
+      title="Settings"
+    >
+      <span class="text-sm leading-none">⚙</span>
+      <Show when={p.showLabel}>
+        <span class="text-[clamp(9px,.8vw,12px)] font-bold tracking-widest uppercase">Settings</span>
+      </Show>
+    </button>
+  );
+
   const SideboardBtn = (p: { onClick?: () => void; showLabel?: boolean }) => (
     <Show when={sideboardCount() > 0}>
       <button
@@ -165,6 +179,7 @@ export const GameHeader = (props: {
           <LoadDeckModal />
           <SideboardBtn showLabel />
           <MsgToggleBtn class="w-full h-9 text-base" />
+          <SettingsBtn showLabel />
           <Show when={props.onReturnToMenu || props.onQuitGame}>
             <LeaveSection onReturnToMenu={props.onReturnToMenu} onQuitGame={props.onQuitGame} />
           </Show>
@@ -181,6 +196,7 @@ export const GameHeader = (props: {
           <FreePlaceBtn onClick={() => { setFreePlaceMode(v => !v); closeMenu(); }} showLabel />
           <LoadDeckModal onClose={closeMenu} />
           <SideboardBtn onClick={() => { openDeckSearch(`${myUserId}:sideboard`, "Sideboard"); closeMenu(); }} showLabel />
+          <SettingsBtn onClick={() => { setShowSettingsModal(true); closeMenu(); }} showLabel />
           <Show when={props.onReturnToMenu}>
             <button
               class="flex items-center gap-2 w-full px-3 py-2.5 rounded-lg border border-info/25 bg-info/8

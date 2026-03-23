@@ -19,6 +19,7 @@ import { showPreview } from "../../src/stores/cardPreviewStore";
 import { getSelectedIds, clearSelection } from "../../src/stores/selectionStore";
 import { setFaceDown, toggleFaceDown, toggleHorizontal, toggleTapped } from "../../src/stores/cardStateStore";
 import { DeckStack } from "../../src/components/DeckStack";
+import { showZoneLabels } from "../../src/stores/settingsStore";
 
 // Renders cards in sortable snap layout
 const SnapCards = (props: { deckId: string; zone: string; horizontal?: boolean }) => (
@@ -59,8 +60,16 @@ const zoneTint = {
 
 // Zone inner container
 const ZoneInner = (props: { label: string; children: any }) => (
-  <div class="zone-inner flex flex-col h-full p-[3px_5px] gap-[3px] overflow-hidden">
-    <span class="zone-label font-cinzel text-[clamp(9px,.8vw,13px)] font-semibold tracking-widest uppercase text-text-muted select-none leading-none">{props.label}</span>
+  <div
+    class="zone-inner flex flex-col h-full overflow-hidden"
+    classList={{
+      "p-[3px_5px] gap-[3px]": showZoneLabels(),
+      "p-[2px_4px] gap-0": !showZoneLabels(),
+    }}
+  >
+    <Show when={showZoneLabels()}>
+      <span class="zone-label font-cinzel text-[clamp(9px,.8vw,13px)] font-semibold tracking-widest uppercase text-text-muted select-none leading-none">{props.label}</span>
+    </Show>
     {props.children}
   </div>
 );

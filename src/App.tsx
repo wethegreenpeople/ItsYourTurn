@@ -25,6 +25,7 @@ import { SelectionBox } from "./components/SelectionBox";
 import { isHorizontal } from "./stores/cardStateStore";
 import { DragBoardSwitcher } from "./components/DragBoardSwitcher";
 import { SettingsModal } from "./components/SettingsModal";
+import { getPluginSetting, showZoneLabels } from "./stores/settingsStore";
 
 export const DropZone = (props: { id: string; children: JSX.Element }) => {
   const droppable = createDroppable(props.id);
@@ -164,7 +165,11 @@ function App(props: { isHost?: boolean; onReturnToMenu?: () => void; onQuitGame?
 
           {/* All player boards — active player gets more height via CSS variable */}
           <div
-            class="game-boards-wrapper flex flex-col flex-1 min-h-0"
+            class="game-boards-wrapper flex flex-1 min-h-0"
+            classList={{
+              "flex-col": getPluginSetting("boardLayout", "vertical") !== "horizontal",
+              "lg:flex-row": getPluginSetting("boardLayout", "vertical") === "horizontal",
+            }}
             style={{
               "--active-rows": gameState.currentTurnPlayerId === currentPlayer()?.id
                 ? "1fr 1.6fr"
@@ -178,6 +183,7 @@ function App(props: { isHost?: boolean; onReturnToMenu?: () => void; onQuitGame?
                   classList={{
                     "player-board--hidden-mobile": viewingPlayerId() !== playerId,
                     "player-board--local": playerId === currentPlayer()?.id,
+                    "lg:-order-1": getPluginSetting("boardLayout", "vertical") === "horizontal" && playerId === currentPlayer()?.id,
                   }}
                 >
                   <div class="font-cinzel text-[clamp(8px,0.7vw,11px)] font-semibold tracking-widest uppercase text-text-muted px-2 py-0.5 flex-shrink-0 border-b border-white/4">
@@ -225,7 +231,9 @@ function App(props: { isHost?: boolean; onReturnToMenu?: () => void; onQuitGame?
           >
             <DropZone id={`${currentPlayer()?.id}:hand`}>
               <div class="flex flex-col h-full px-2 pt-1.5 pb-2 gap-1">
-                <span class="zone-label">Hand</span>
+                <Show when={showZoneLabels()}>
+                  <span class="zone-label font-cinzel text-[clamp(9px,.8vw,13px)] font-semibold tracking-widest uppercase text-text-muted select-none leading-none">Hand</span>
+                </Show>
                 <div class="hand-cards flex flex-row gap-2 overflow-x-auto flex-1 items-end pb-0.5" style={{ "-webkit-overflow-scrolling": "touch", "scrollbar-width": "none" }}>
                   <SortableProvider ids={cardsInDeck(`${currentPlayer()?.id}:hand`).map(c => c.id)}>
                     <For each={cardsInDeck(`${currentPlayer()?.id}:hand`)}>

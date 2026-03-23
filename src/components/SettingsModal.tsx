@@ -9,16 +9,22 @@ import type { PluginSetting } from "../../plugins/base/plugin";
 
 const Toggle = (props: { value: boolean; onChange: (v: boolean) => void }) => (
   <button
-    class="relative w-10 h-6 rounded-full transition-colors flex-shrink-0"
-    style={{ background: props.value ? "var(--plugin-accent, #c9a84c)" : "#252840" }}
+    class="relative w-10 h-6 rounded-full transition-colors duration-150 flex-shrink-0 cursor-pointer border border-raised"
+    classList={{
+      "bg-gold/80 border-gold/60": props.value,
+      "bg-surface": !props.value,
+    }}
     onClick={() => props.onChange(!props.value)}
     aria-label="Toggle"
     role="switch"
     aria-checked={props.value}
   >
     <span
-      class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform"
-      style={{ transform: props.value ? "translateX(16px)" : "translateX(0)" }}
+      class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-150"
+      classList={{
+        "translate-x-4": props.value,
+        "translate-x-0": !props.value,
+      }}
     />
   </button>
 );
@@ -30,36 +36,24 @@ const PluginSettingRow = (props: { setting: PluginSetting }) => {
   return (
     <div class="flex flex-col gap-2">
       <div>
-        <div class="text-sm font-semibold text-[#e2d9c7]">{s.label}</div>
+        <div class="text-sm font-semibold text-text">{s.label}</div>
         <Show when={s.description}>
-          <div class="text-xs text-[#c5c3d8] mt-0.5">{s.description}</div>
+          <div class="text-xs text-text-muted mt-0.5">{s.description}</div>
         </Show>
       </div>
       <Show when={s.type === "toggle"}>
-        <Toggle
-          value={current() === true}
-          onChange={(v) => setPluginSetting(s.key, v)}
-        />
+        <Toggle value={current() === true} onChange={(v) => setPluginSetting(s.key, v)} />
       </Show>
       <Show when={s.type === "select"}>
         <div class="flex gap-2 flex-wrap">
           <For each={s.options ?? []}>
             {(opt) => (
               <button
-                class="px-3 py-1.5 rounded text-xs font-semibold border transition-all"
-                style={
-                  current() === opt.value
-                    ? {
-                        background: "rgba(201,168,76,0.15)",
-                        "border-color": "rgba(201,168,76,0.6)",
-                        color: "var(--plugin-accent, #c9a84c)",
-                      }
-                    : {
-                        background: "rgba(22,25,42,0.85)",
-                        "border-color": "#2e3250",
-                        color: "#c5c3d8",
-                      }
-                }
+                class="px-3 py-1.5 rounded text-xs font-semibold border transition-all duration-150 cursor-pointer"
+                classList={{
+                  "bg-gold/12 border-gold/50 text-gold": current() === opt.value,
+                  "bg-surface border-raised text-text-muted hover:border-gold/35 hover:text-gold": current() !== opt.value,
+                }}
                 onClick={() => setPluginSetting(s.key, opt.value)}
               >
                 {opt.label}
@@ -79,37 +73,22 @@ export const SettingsModal = () => {
     <Show when={showSettingsModal()}>
       {/* Backdrop */}
       <div
-        class="fixed inset-0 z-[500]"
-        style={{ background: "rgba(0,0,0,0.65)" }}
+        class="fixed inset-0 z-[500] bg-black/65"
         onClick={() => setShowSettingsModal(false)}
       />
       {/* Modal */}
       <div class="fixed inset-0 z-[501] flex items-center justify-center pointer-events-none">
         <div
-          class="pointer-events-auto w-80 max-h-[80vh] overflow-y-auto rounded-lg shadow-2xl"
-          style={{
-            background: "#0e1226",
-            border: "1px solid #3a3d54",
-          }}
+          class="pointer-events-auto w-80 max-h-[80vh] overflow-y-auto rounded-lg shadow-2xl bg-base border border-raised"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div
-            class="flex items-center justify-between px-4 py-3"
-            style={{ "border-bottom": "1px solid #252840" }}
-          >
-            <span
-              class="text-sm font-semibold tracking-widest uppercase"
-              style={{
-                "font-family": "var(--plugin-font-display, 'Cinzel', Georgia, serif)",
-                color: "var(--plugin-accent, #c9a84c)",
-              }}
-            >
+          <div class="flex items-center justify-between px-4 py-3 border-b border-raised">
+            <span class="font-cinzel text-sm font-semibold tracking-widest uppercase text-gold">
               Settings
             </span>
             <button
-              class="text-lg leading-none transition-colors"
-              style={{ color: "#c5c3d8" }}
+              class="text-lg leading-none text-text-muted hover:text-text transition-colors duration-150 cursor-pointer"
               onClick={() => setShowSettingsModal(false)}
               aria-label="Close settings"
             >
@@ -122,8 +101,8 @@ export const SettingsModal = () => {
             {/* Universal: Zone Labels */}
             <div class="flex items-start justify-between gap-3">
               <div>
-                <div class="text-sm font-semibold text-[#e2d9c7]">Zone Labels</div>
-                <div class="text-xs text-[#c5c3d8] mt-0.5">Show zone name inside each panel</div>
+                <div class="text-sm font-semibold text-text">Zone Labels</div>
+                <div class="text-xs text-text-muted mt-0.5">Show zone name inside each panel</div>
               </div>
               <Toggle value={showZoneLabels()} onChange={setShowZoneLabels} />
             </div>
