@@ -5,7 +5,7 @@ import.meta.glob("./stores/index.ts", { eager: true });
 import { render } from "solid-js/web";
 import { createEffect, createSignal, Show } from "solid-js";
 import App from "./App";
-import { LandingPage } from "./components/LandingPage";
+import { LandingPage } from "./pages/landing-page/LandingPage";
 import { joinRoom, requestJoin, leaveRoom, broadcastPlayerLeave } from "./utils/socket";
 import { addPlayer, myUserId, setCurrentPlayer, gameState, resetGameState } from "./stores/gameStore";
 import { announcePublicGame, stopAnnouncingGame, updateLobbyPlayerCount } from "./utils/lobby";

@@ -1,9 +1,10 @@
 import { createMemo, createSignal, For, onCleanup, Show } from "solid-js";
-import { subscribeLobby, unsubscribeLobby, type LobbyEntry } from "../utils/lobby";
-import { savedGames, loadSavedGames, removeSavedGame } from "../stores/savedGamesStore";
-import { PlayerSettings } from "./PlayerSettings";
-import { HostModal } from "./HostModal";
-import { JoinModal } from "./JoinModal";
+import { subscribeLobby, unsubscribeLobby, type LobbyEntry } from "../../utils/lobby";
+import { savedGames, loadSavedGames, removeSavedGame } from "../../stores/savedGamesStore";
+import { PlayerSettings } from "../../components/PlayerSettings";
+import { HostModal } from "../../components/HostModal";
+import { JoinModal } from "../../components/JoinModal";
+import { LobbyHeader } from "./components/LobbyHeader";
 
 const pluginModules = import.meta.glob("../../plugins/**/info.json", { eager: true });
 
@@ -154,28 +155,6 @@ export function LandingPage(props: LandingPageProps) {
     </div>
   );
 
-  const LiveIndicator = () => (
-    <>
-      <Show when={lobbyLoading()}>
-        <div class="w-4 h-4 rounded-full border-2 border-rim/40 border-t-text-muted/50 animate-[lp-spin_.75s_linear_infinite]" />
-      </Show>
-      <Show when={!lobbyLoading()}>
-        <div class="flex items-center gap-2">
-          <div class="w-1.5 h-1.5 rounded-full bg-[#4ade80] shadow-[0_0_5px_rgba(74,222,128,.5)] flex-shrink-0
-                      animate-[lp-pulse-dot_2s_ease-in-out_infinite]" />
-          <span class="text-[.68rem] tracking-[.15em] uppercase font-semibold text-[rgba(74,222,128,.65)]">Live</span>
-        </div>
-      </Show>
-    </>
-  );
-
-  const BackButton = (p: { onClick: () => void }) => (
-    <button onClick={p.onClick}
-      class="w-9 h-9 rounded-lg flex items-center justify-center text-sm cursor-pointer font-cinzel
-             bg-surface/90 border border-rim/60 text-text-muted/50
-             transition-colors duration-150 hover:border-text-muted/40 hover:text-text">‹</button>
-  );
-
   const GoldCta = (p: { onClick: () => void; children: any }) => (
     <button onClick={p.onClick}
       class="px-5 py-2.5 rounded-[9px] font-cinzel font-bold text-[.78rem] tracking-[.1em] uppercase cursor-pointer border-none flex-shrink-0"
@@ -184,16 +163,7 @@ export function LandingPage(props: LandingPageProps) {
     </button>
   );
 
-  const LobbyHeader = () => (
-    <div class="flex items-center gap-4 px-6 lg:px-8 py-5 border-b border-rim/40 flex-shrink-0">
-      <BackButton onClick={closeLobby} />
-      <div class="flex-1">
-        <h2 class="font-cinzel font-bold text-[1.3rem] m-0 leading-none tracking-[.06em] text-text">LOBBY</h2>
-        <p class="text-[.7rem] tracking-[.18em] uppercase m-0 mt-0.5 text-text-muted/35">Open public games</p>
-      </div>
-      <LiveIndicator />
-    </div>
-  );
+
 
   const LobbyFooter = () => (
     <div class="flex-shrink-0 px-6 lg:px-8 pt-4 pb-6 border-t border-rim/40">
@@ -291,13 +261,16 @@ export function LandingPage(props: LandingPageProps) {
               <span class="lp-chevron text-lg opacity-0 -translate-x-2 transition-all duration-200 text-text-muted/50">›</span>
             </button>
 
-            <div class="flex items-center h-7 px-6 gap-3 text-[.65rem] tracking-[.2em] uppercase font-semibold
+            <div class="rounded-b-xl border border-rim/60">
+            </div>
+
+            <div class="lg:hidden flex items-center h-7 px-6 gap-3 text-[.65rem] tracking-[.2em] uppercase font-semibold
                         bg-base/80 border-x border-rim/50 text-gold/40">
               <span class="flex-1 h-px bg-gold/15" />or<span class="flex-1 h-px bg-gold/15" />
             </div>
 
             <button onClick={openLobby}
-              class="lp-action group flex items-center gap-5 px-6 py-5 text-left w-full cursor-pointer border-t-0 rounded-b-xl
+              class="lg:hidden lp-action group flex items-center gap-5 px-6 py-5 text-left w-full cursor-pointer border-t-0 rounded-b-xl
                      bg-surface/90 border border-rim/60">
               <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0 bg-white/4 border border-rim/50">🌐</div>
               <div class="flex flex-col gap-0.5 flex-1">
@@ -312,42 +285,19 @@ export function LandingPage(props: LandingPageProps) {
 
         {/* Right panel — desktop only */}
         <div class="hidden lg:flex flex-col flex-1 overflow-hidden">
-
-          <Show when={!lobbyOpen()}>
-            <div class="flex flex-col h-full px-10 py-10 overflow-y-auto" style="scrollbar-width:thin;scrollbar-color:rgba(82,82,91,.4) transparent">
-              <Show
-                when={myGames().length > 0}
-                fallback={
-                  <div class="flex flex-col items-center justify-center h-full gap-4 opacity-30">
-                    <span class="font-cinzel text-[3rem] text-text-muted/30">⚔</span>
-                    <p class="font-cinzel text-[.85rem] tracking-[.2em] uppercase m-0 text-text-muted/50">No saved games yet</p>
-                    <p class="text-[.78rem] m-0 text-center text-text-muted/35">Host or join a game to get started</p>
-                  </div>
-                }
-              >
-                <p class="text-[.65rem] font-semibold tracking-[.35em] uppercase mb-4 m-0 text-text-muted/40">My Games</p>
-                <SavedGamesList />
+          <div class="flex flex-col h-full animate-[lp-slide-right_.32s_cubic-bezier(.22,1,.36,1)_both]">
+            <LobbyHeader />
+            <div class="flex-1 overflow-y-auto px-8 py-6" style="scrollbar-width:thin;scrollbar-color:rgba(82,82,91,.4) transparent">
+              <p class="text-[.65rem] font-semibold tracking-[.35em] uppercase mb-3 m-0 text-text-muted/40">Available Games</p>
+              <LobbyList />
+              <Show when={myGames().length > 0}>
+                <div class="mt-8">
+                  <p class="text-[.65rem] font-semibold tracking-[.35em] uppercase mb-3 m-0 text-text-muted/40">My Games</p>
+                  <SavedGamesList />
+                </div>
               </Show>
             </div>
-          </Show>
-
-          <Show when={lobbyOpen()}>
-            <div class="flex flex-col h-full animate-[lp-slide-right_.32s_cubic-bezier(.22,1,.36,1)_both]">
-              <LobbyHeader />
-              <div class="flex-1 overflow-y-auto px-8 py-6" style="scrollbar-width:thin;scrollbar-color:rgba(82,82,91,.4) transparent">
-                <p class="text-[.65rem] font-semibold tracking-[.35em] uppercase mb-3 m-0 text-text-muted/40">Available Games</p>
-                <LobbyList />
-                <Show when={myGames().length > 0}>
-                  <div class="mt-8">
-                    <p class="text-[.65rem] font-semibold tracking-[.35em] uppercase mb-3 m-0 text-text-muted/40">My Games</p>
-                    <SavedGamesList />
-                  </div>
-                </Show>
-              </div>
-              <LobbyFooter />
-            </div>
-          </Show>
-
+          </div>
         </div>
       </div>
 
