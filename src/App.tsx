@@ -38,7 +38,7 @@ export const DropZone = (props: { id: string; children: JSX.Element }) => {
   );
 };
 
-function App(props: { isHost?: boolean }) {
+function App(props: { isHost?: boolean; onReturnToMenu?: () => void; onQuitGame?: () => void }) {
   const plugin: Plugin = Plugins.filter(s => s.id === "riftbound")[0];
 
   // Set active plugin so lifecycle hooks work from deckStore/gameStore
@@ -129,7 +129,7 @@ function App(props: { isHost?: boolean }) {
       <DeckSearchModal />
       <DragBoardSwitcher />
       <main class="game-root" style={themeVars}>
-        <GameHeader />
+        <GameHeader onReturnToMenu={props.onReturnToMenu} onQuitGame={props.onQuitGame} />
         <div class="game-main">
 
           {/* Board switcher — mobile only, hidden on desktop via CSS */}

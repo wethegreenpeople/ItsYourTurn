@@ -54,9 +54,13 @@ const PlayerPanel = (props: { player: Player }) => {
   );
 };
 
-export const GameHeader = () => {
+export const GameHeader = (props: {
+  onReturnToMenu?: () => void;
+  onQuitGame?: () => void;
+}) => {
   const isMyTurn = () => gameState.currentTurnPlayerId === myUserId;
   const [menuOpen, setMenuOpen] = createSignal(false);
+  const [showLeaveMenu, setShowLeaveMenu] = createSignal(false);
   const closeMenu = () => setMenuOpen(false);
 
   const sideboardCount = () =>
@@ -136,6 +140,55 @@ export const GameHeader = () => {
           >
             ✉
           </button>
+
+          {/* ── Leave Game section ── */}
+          <Show when={props.onReturnToMenu || props.onQuitGame}>
+            <div class="leave-section">
+              <Show
+                when={showLeaveMenu()}
+                fallback={
+                  <button
+                    class="leave-btn"
+                    onClick={() => setShowLeaveMenu(true)}
+                    title="Leave game options"
+                  >
+                    <span class="leave-icon">⤺</span>
+                    <span class="leave-label">Leave</span>
+                  </button>
+                }
+              >
+                <div class="leave-options">
+                  <Show when={props.onReturnToMenu}>
+                    <button
+                      class="leave-option leave-option--menu"
+                      onClick={() => { setShowLeaveMenu(false); props.onReturnToMenu!(); }}
+                      title="Return to menu (you stay in the game)"
+                    >
+                      <span class="leave-option-icon">⊞</span>
+                      <span class="leave-option-label">Menu</span>
+                    </button>
+                  </Show>
+                  <Show when={props.onQuitGame}>
+                    <button
+                      class="leave-option leave-option--quit"
+                      onClick={() => { setShowLeaveMenu(false); props.onQuitGame!(); }}
+                      title="Quit game (removes you from the game)"
+                    >
+                      <span class="leave-option-icon">✕</span>
+                      <span class="leave-option-label">Quit</span>
+                    </button>
+                  </Show>
+                  <button
+                    class="leave-option leave-option--cancel"
+                    onClick={() => setShowLeaveMenu(false)}
+                  >
+                    <span class="leave-option-icon">↩</span>
+                    <span class="leave-option-label">Back</span>
+                  </button>
+                </div>
+              </Show>
+            </div>
+          </Show>
         </div>
       </div>
 
@@ -162,6 +215,24 @@ export const GameHeader = () => {
             >
               <span class="sideboard-icon">⧉</span>
               <span class="sideboard-label">Sideboard ({sideboardCount()})</span>
+            </button>
+          </Show>
+          <Show when={props.onReturnToMenu}>
+            <button
+              class="leave-option leave-option--menu"
+              onClick={() => { closeMenu(); props.onReturnToMenu!(); }}
+            >
+              <span class="leave-option-icon">⊞</span>
+              <span class="leave-option-label">Return to Menu</span>
+            </button>
+          </Show>
+          <Show when={props.onQuitGame}>
+            <button
+              class="leave-option leave-option--quit"
+              onClick={() => { closeMenu(); props.onQuitGame!(); }}
+            >
+              <span class="leave-option-icon">✕</span>
+              <span class="leave-option-label">Quit Game</span>
             </button>
           </Show>
         </div>

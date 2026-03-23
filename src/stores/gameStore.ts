@@ -3,8 +3,8 @@ import { getActivePlugin } from "./pluginStore";
 import { broadcastGameState } from "../utils/socket";
 import { createSignal } from "solid-js";
 import { uuid4 } from "../utils/uuid";
-import type { Card } from "../models/Card";
 import { logEvent } from "./chatStore";
+import { Card } from "../models/Card.tsx";
 
 export interface DeckData {
   id: string;
@@ -104,6 +104,28 @@ export function endTurn() {
 
 export function toggleMessaging() {
   setGameState("showMessaging", (v) => !v);
+}
+
+/** Remove a player from the game and broadcast the updated state. */
+export function removePlayer(playerId: string) {
+  const remaining = gameState.players.filter((p) => p.id !== playerId);
+  setGameState("players", remaining);
+  broadcastGameState();
+}
+
+/** Reset all game state (used when fully leaving a room). */
+export function resetGameState() {
+  setGameState(reconcile({
+    players: [],
+    decks: [],
+    cardStates: {},
+    arrows: [],
+    cardPositions: {},
+    currentTurnPlayerId: "",
+    scoreLabel: "HP",
+    showMessaging: false,
+    playerStartingScore: 20,
+  }));
 }
 
 /**

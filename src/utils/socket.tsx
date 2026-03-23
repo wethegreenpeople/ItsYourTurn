@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { gameState, myUserId, addPlayer, applyRemoteState } from "../stores/gameStore";
+import { gameState, myUserId, addPlayer, removePlayer, applyRemoteState } from "../stores/gameStore";
 import type { GameState } from "../stores/gameStore";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
@@ -49,6 +49,11 @@ export function joinRoom(roomCode: string, onReady?: () => void) {
       }
     })
 
+    // A player is quitting the game entirely.
+    .on("broadcast", { event: "player_leave" }, ({ payload }: { payload: { id: string } }) => {
+      removePlayer(payload.id);
+    })
+
     // Receive a chat message from another client.
     .on("broadcast", { event: "chat_message" }, ({ payload }) => {
       _chatMessageHandler?.(payload);
@@ -80,6 +85,11 @@ export function broadcastGameState() {
 /** Tell the room we want to join as a new player. */
 export function requestJoin(playerId: string, playerName: string) {
   channel?.send({ type: "broadcast", event: "player_join", payload: { id: playerId, name: playerName } });
+}
+
+/** Tell the room that a player is permanently leaving (quit, not just menu). */
+export function broadcastPlayerLeave(playerId: string) {
+  channel?.send({ type: "broadcast", event: "player_leave", payload: { id: playerId } });
 }
 
 export function leaveRoom() {
