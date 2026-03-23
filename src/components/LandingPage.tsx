@@ -242,7 +242,7 @@ export function LandingPage(props: LandingPageProps) {
 
           {/* Title */}
           <div class="text-center animate-[lp-emerge-up_.8s_cubic-bezier(.22,1,.36,1)_both]">
-            <p class="text-[.68rem] font-semibold tracking-[.5em] uppercase m-0 mb-2 text-text-muted/40">TCG Online</p>
+            <p class="text-[.68rem] font-semibold tracking-[.5em] uppercase m-0 mb-2 text-text-muted/40">ItsYourTurn</p>
             <h1 class="font-cinzel font-bold leading-none tracking-[.05em] m-0 text-text"
                 style="font-size:clamp(3rem,9vw,5.5rem)">THE ARENA</h1>
             <div class="mx-auto my-3.5 animate-[lp-rule-expand_.9s_ease-out_.4s_both]"
