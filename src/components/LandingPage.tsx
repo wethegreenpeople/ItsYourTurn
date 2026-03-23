@@ -242,12 +242,15 @@ export function LandingPage(props: LandingPageProps) {
 
           {/* Title */}
           <div class="text-center animate-[lp-emerge-up_.8s_cubic-bezier(.22,1,.36,1)_both]">
-            <p class="text-[.68rem] font-semibold tracking-[.5em] uppercase m-0 mb-2 text-text-muted/40">ItsYourTurn</p>
-            <h1 class="font-cinzel font-bold leading-none tracking-[.05em] m-0 text-text"
-                style="font-size:clamp(3rem,9vw,5.5rem)">THE ARENA</h1>
+            <h1 class="font-cinzel font-bold leading-none m-0">
+              <span class="block tracking-[.18em] text-text/60"
+                    style="font-size:clamp(1.1rem,3.2vw,1.7rem)">IT'S YOUR</span>
+              <span class="block tracking-[.04em]"
+                    style="font-size:clamp(3.5rem,10vw,6.5rem);background:linear-gradient(135deg,#f5cb5c 0%,#d4922a 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">TURN</span>
+            </h1>
             <div class="mx-auto my-3.5 animate-[lp-rule-expand_.9s_ease-out_.4s_both]"
                  style="height:1px;background:linear-gradient(90deg,transparent,rgba(245,203,92,.45) 40%,rgba(245,203,92,.45) 60%,transparent)" />
-            <p class="text-[.82rem] tracking-[.25em] uppercase m-0 text-text-muted/30">Choose your destiny</p>
+            <p class="text-[.72rem] tracking-[.3em] uppercase m-0 text-text-muted/30">itsyourturn.gg</p>
           </div>
 
           {/* Saved games — mobile only */}
