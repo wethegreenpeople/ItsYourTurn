@@ -52,8 +52,16 @@ export const CardVisual = (props: {
     >
       <div class="card-inner">
         <img src={`${props.card.image}`} draggable="false" />
-        <div class="card-footer">
-          <span class="card-type">{props.card.name}</span>
+        <div
+          class="card-footer absolute bottom-0 left-0 right-0 flex items-center justify-center border-t border-gold/18"
+          style={{ height: "19%", background: "rgba(0, 0, 0, 0.78)" }}
+        >
+          <span
+            class="font-body text-[clamp(6px,0.5vw,9px)] font-semibold tracking-[0.1em] uppercase"
+            style={{ "font-family": "var(--plugin-font-body, 'Inter', system-ui, sans-serif)", color: "var(--plugin-text-muted, #cfdbd5)" }}
+          >
+            {props.card.name}
+          </span>
         </div>
       </div>
     </div>
@@ -140,7 +148,7 @@ export const CardComponent = (props: { card: Card; zoneId: string; horizontal?: 
     <div
       use:sortable={sortable}
       data-card-id={props.card.id}
-      class="card-drag-wrapper"
+      class="inline-block flex-shrink-0 cursor-grab active:cursor-grabbing relative"
       style={{ "touch-action": "none" }}
       onDragStart={(e) => e.preventDefault()}
       onClick={(e) => {
@@ -175,10 +183,10 @@ export const CardComponent = (props: { card: Card; zoneId: string; horizontal?: 
         horizontal={effectiveHorizontal()}
       />
       <Show when={outgoing()}>
-        <div class="cross-player-badge cross-player-badge--out">→ {outgoing()}</div>
+        <div class="absolute bottom-[3px] left-1/2 -translate-x-1/2 text-[8px] font-bold tracking-[0.02em] whitespace-nowrap px-[5px] py-px rounded-[3px] pointer-events-none z-10 leading-[14px] bg-gold/92 text-[#1a1100] shadow-[0_1px_4px_rgba(0,0,0,0.5)]">→ {outgoing()}</div>
       </Show>
       <Show when={incoming()}>
-        <div class="cross-player-badge cross-player-badge--in">← {incoming()}</div>
+        <div class="cross-player-badge--in absolute bottom-[3px] left-1/2 -translate-x-1/2 text-[8px] font-bold tracking-[0.02em] whitespace-nowrap px-[5px] py-px rounded-[3px] pointer-events-none z-10 leading-[14px] bg-[rgba(210,60,60,0.92)] text-white shadow-[0_1px_4px_rgba(0,0,0,0.5)]">← {incoming()}</div>
       </Show>
     </div>
   );

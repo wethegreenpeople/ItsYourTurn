@@ -25,7 +25,6 @@ import { SelectionBox } from "./components/SelectionBox";
 import { isHorizontal } from "./stores/cardStateStore";
 import { DragBoardSwitcher } from "./components/DragBoardSwitcher";
 import { SettingsModal } from "./components/SettingsModal";
-import { showZoneLabels, getPluginSetting } from "./stores/settingsStore";
 
 export const DropZone = (props: { id: string; children: JSX.Element }) => {
   const droppable = createDroppable(props.id);
@@ -40,7 +39,7 @@ export const DropZone = (props: { id: string; children: JSX.Element }) => {
   );
 };
 
-function App(props: { isHost?: boolean }) {
+function App(props: { isHost?: boolean; onReturnToMenu?: () => void; onQuitGame?: () => void }) {
   const plugin: Plugin = Plugins.filter(s => s.id === "riftbound")[0];
 
   // Set active plugin so lifecycle hooks work from deckStore/gameStore
@@ -79,14 +78,14 @@ function App(props: { isHost?: boolean }) {
 
   const t = plugin.theme ?? {};
   const themeVars = {
-    "--plugin-accent":       t.accentColor        ?? "#c9a84c",
-    "--plugin-accent-dim":   t.accentDim          ?? "#7a6030",
-    "--plugin-surface":      t.surfaceColor       ?? "rgba(30,34,54,0.95)",
-    "--plugin-border":       t.borderColor        ?? "#3a3d54",
-    "--plugin-text":         t.textColor          ?? "#e2d9c7",
-    "--plugin-text-muted":   t.textMuted          ?? "#c5c3d8",
+    "--plugin-accent":       t.accentColor        ?? "#f5cb5c",
+    "--plugin-accent-dim":   t.accentDim          ?? "#b8952a",
+    "--plugin-surface":      t.surfaceColor       ?? "rgba(39,39,42,0.95)",
+    "--plugin-border":       t.borderColor        ?? "#52525B",
+    "--plugin-text":         t.textColor          ?? "#e8eddf",
+    "--plugin-text-muted":   t.textMuted          ?? "#cfdbd5",
     "--plugin-font-display": t.fontDisplay        ?? "'Cinzel', Georgia, serif",
-    "--plugin-font-body":    t.fontBody           ?? "'Rajdhani', system-ui, sans-serif",
+    "--plugin-font-body":    t.fontBody           ?? "'Inter', system-ui, sans-serif",
     "--plugin-grid-cols":    t.gridColumnsTemplate ?? "repeat(12, 1fr)",
     "--plugin-grid-rows":    t.gridRowsTemplate    ?? "repeat(12, 1fr)",
   };
@@ -132,24 +131,27 @@ function App(props: { isHost?: boolean }) {
       <DragBoardSwitcher />
       <SettingsModal />
       <main
-        class="game-root"
-        classList={{
-          "hide-zone-labels": !showZoneLabels(),
-          "board-layout-horizontal": getPluginSetting('boardLayout', 'vertical') === 'horizontal',
+        class="flex flex-col h-dvh lg:flex-row"
+        style={{
+          ...themeVars,
+          background: "radial-gradient(ellipse 100% 55% at 50% 0%, rgba(40, 40, 48, 0.25) 0%, transparent 70%), linear-gradient(180deg, #1c1c1f 0%, #111113 100%)",
         }}
-        style={themeVars}
       >
-        <GameHeader />
-        <div class="game-main">
+        <GameHeader onReturnToMenu={props.onReturnToMenu} onQuitGame={props.onQuitGame} />
+        <div class="flex flex-col flex-1 min-h-0 min-w-0">
 
-          {/* Board switcher — mobile only, hidden on desktop via CSS */}
+          {/* Board switcher — mobile only, hidden on desktop via lg:hidden */}
           <Show when={gameState.players.length > 1}>
-            <div class="board-switcher">
+            <div class="flex gap-1 px-2 py-1.5 bg-base/90 border-b border-raised flex-shrink-0 lg:hidden">
               <For each={gameState.players}>
                 {(p) => (
                   <button
-                    class="board-switcher-tab"
-                    classList={{ "board-switcher-tab--active": viewingPlayerId() === p.id }}
+                    class="flex-1 py-1.5 px-2 rounded text-[11px] font-semibold tracking-widest uppercase cursor-pointer
+                           transition-colors duration-150 border"
+                    classList={{
+                      "bg-gold/12 border-gold/50 text-gold": viewingPlayerId() === p.id,
+                      "bg-surface/85 border-raised text-text-muted": viewingPlayerId() !== p.id,
+                    }}
                     onClick={() => setViewingPlayerId(p.id)}
                     data-player-id={p.id}
                   >
@@ -162,7 +164,7 @@ function App(props: { isHost?: boolean }) {
 
           {/* All player boards — active player gets more height via CSS variable */}
           <div
-            class="game-boards-wrapper"
+            class="game-boards-wrapper flex flex-col flex-1 min-h-0"
             style={{
               "--active-rows": gameState.currentTurnPlayerId === currentPlayer()?.id
                 ? "1fr 1.6fr"
@@ -172,23 +174,29 @@ function App(props: { isHost?: boolean }) {
             <For each={playerBoards()}>
               {({ playerId, areas }) => (
                 <div
-                  class="player-board"
+                  class="player-board flex flex-col flex-1 min-h-0 min-w-0"
                   classList={{
                     "player-board--hidden-mobile": viewingPlayerId() !== playerId,
                     "player-board--local": playerId === currentPlayer()?.id,
                   }}
                 >
-                  <div class="player-board-label">
+                  <div class="font-cinzel text-[clamp(8px,0.7vw,11px)] font-semibold tracking-widest uppercase text-text-muted px-2 py-0.5 flex-shrink-0 border-b border-white/4">
                     {playerId === currentPlayer()?.id
                       ? "Your Board"
                       : gameState.players.find(p => p.id === playerId)?.name ?? playerId}
                   </div>
-                  <div class="game-board">
-                    <div class="game-grid">
+                  <div class="game-board flex-1 min-h-0 p-1.5 md:p-2.5 relative overflow-hidden md:overflow-visible">
+                    <div
+                      class="game-grid h-full w-full grid gap-[3px] md:gap-1 bg-base/40 border border-raised rounded-lg md:rounded-[10px] p-[3px] md:p-1"
+                      style={{
+                        "grid-template-columns": "var(--plugin-grid-cols, repeat(12, 1fr))",
+                        "grid-template-rows": "var(--plugin-grid-rows, repeat(12, 1fr))",
+                      }}
+                    >
                       <For each={areas}>
                         {(panel) => (
                           <div
-                            class={`zone-panel${panel.className ? ` ${panel.className}` : ''}`}
+                            class={`zone-panel bg-surface/95 border border-rim transition-[border-color] duration-200${panel.className ? ` ${panel.className}` : ''}`}
                             data-zone={panel.id}
                             style={{
                               "grid-column": `${panel.region.xStart} / ${panel.region.xFinish}`,
@@ -207,11 +215,18 @@ function App(props: { isHost?: boolean }) {
           </div>
 
           {/* Local player's hand — always at the bottom */}
-          <div class="hand-dock">
+          <div
+            class="hand-dock relative flex-shrink-0 border-t border-raised"
+            style={{
+              background: "linear-gradient(0deg, #111113 0%, #18181b 100%)",
+              "min-height": "clamp(96px, 13vh, 160px)",
+              "max-height": "clamp(120px, 18vh, 200px)",
+            }}
+          >
             <DropZone id={`${currentPlayer()?.id}:hand`}>
-              <div class="hand-inner">
+              <div class="flex flex-col h-full px-2 pt-1.5 pb-2 gap-1">
                 <span class="zone-label">Hand</span>
-                <div class="hand-cards">
+                <div class="hand-cards flex flex-row gap-2 overflow-x-auto flex-1 items-end pb-0.5" style={{ "-webkit-overflow-scrolling": "touch", "scrollbar-width": "none" }}>
                   <SortableProvider ids={cardsInDeck(`${currentPlayer()?.id}:hand`).map(c => c.id)}>
                     <For each={cardsInDeck(`${currentPlayer()?.id}:hand`)}>
                       {(card) => <CardComponent card={card} zoneId={`${currentPlayer()?.id}:hand`} />}
@@ -261,8 +276,8 @@ function App(props: { isHost?: boolean }) {
           const y = Math.max(8, Math.min(window.innerHeight - ph - 16, previewState()!.y - ph));
           return (
             <>
-              <div class="card-preview-backdrop" onClick={hidePreview} />
-              <div class="card-preview-popup" style={{ left: `${x}px`, top: `${y}px` }}>
+              <div class="fixed inset-0 z-[9999]" onClick={hidePreview} />
+              <div class="card-preview-popup fixed z-[10000] pointer-events-auto" style={{ left: `${x}px`, top: `${y}px`, animation: "preview-card-in 0.15s cubic-bezier(0.34, 1.56, 0.64, 1)" }}>
                 <CardVisual card={card} horizontal={horiz} />
               </div>
             </>

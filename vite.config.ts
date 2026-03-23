@@ -9,6 +9,15 @@ const host = process.env.TAURI_DEV_HOST;
 export default defineConfig(async () => ({
   plugins: [solid(), tailwindcss()],
 
+  build: {
+    rollupOptions: {
+      // @tauri-apps/plugin-store is injected by the Tauri runtime and not
+      // bundled — in web builds the dynamic import gracefully throws and we
+      // fall back to localStorage.
+      external: ["@tauri-apps/plugin-store"],
+    },
+  },
+
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //
   // 1. prevent Vite from obscuring rust errors

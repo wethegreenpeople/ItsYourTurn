@@ -18,7 +18,7 @@ import { findDeckForCard } from "../../src/stores/deckStore";
 import { showPreview } from "../../src/stores/cardPreviewStore";
 import { getSelectedIds, clearSelection } from "../../src/stores/selectionStore";
 import { setFaceDown, toggleFaceDown, toggleHorizontal, toggleTapped } from "../../src/stores/cardStateStore";
-import { getPluginSetting } from "../../src/stores/settingsStore";
+import { DeckStack } from "../../src/components/DeckStack";
 
 // Renders cards in sortable snap layout
 const SnapCards = (props: { deckId: string; zone: string; horizontal?: boolean }) => (
@@ -49,10 +49,26 @@ const FreeCards = (props: { deckId: string; zone: string; horizontal?: boolean }
   </SortableProvider>
 );
 
+// Zone tint classes — Tailwind instead of CSS
+const zoneTint = {
+  battlefield: "bg-surface/97 border-rim shadow-[inset_0_1px_0_rgba(245,203,92,.08)]",
+  base:        "bg-[rgba(35,35,39,.95)] border-rim shadow-[inset_0_1px_0_rgba(255,255,255,.04)]",
+  runes:       "bg-surface/97 border-rim shadow-[inset_0_1px_0_rgba(245,203,92,.1)]",
+  deck:        "bg-base/99 border-raised shadow-[inset_0_1px_0_rgba(245,203,92,.12)]",
+};
+
+// Zone inner container
+const ZoneInner = (props: { label: string; children: any }) => (
+  <div class="zone-inner flex flex-col h-full p-[3px_5px] gap-[3px] overflow-hidden">
+    <span class="zone-label font-cinzel text-[clamp(9px,.8vw,13px)] font-semibold tracking-widest uppercase text-text-muted select-none leading-none">{props.label}</span>
+    {props.children}
+  </div>
+);
+
 // Zone cards area that switches between snap and free-place based on global toggle
 const ZoneCards = (props: { deckId: string; zone: string; horizontal?: boolean }) => (
   <div
-    class="zone-cards"
+    class="zone-cards flex flex-wrap gap-1 content-start items-start flex-1 min-h-0 p-[2px_4px_4px] overflow-y-auto overflow-x-hidden"
     classList={{
       "zone-cards--free": freePlaceMode(),
       "zone-cards--empty": cardsInDeck(props.deckId).length === 0,
@@ -194,135 +210,106 @@ export class RiftBound implements Plugin {
     return [
       {
         id: `${p}:battlefield`,
-        className: "zone-battlefield",
-        region: { xStart: 1, xFinish: getPluginSetting('boardLayout', 'vertical') === 'vertical' ? 11 : 9, yStart: 1, yFinish: 4 },
+        className: zoneTint.battlefield,
+        region: { xStart: 1, xFinish: 11, yStart: 1, yFinish: 4 },
         content: () => (
           <DropZone id={`${p}:battlefield`}>
-            <div class="zone-inner">
-              <span class="zone-label">Battlefield</span>
+            <ZoneInner label="Battlefield">
               <ZoneCards deckId={`${p}:battlefield`} zone={`${p}:battlefield`} />
-            </div>
+            </ZoneInner>
           </DropZone>
         ),
       },
       {
         id: `${p}:legend`,
-        className: "zone-battlefield",
-        region: { xStart: getPluginSetting('boardLayout', 'vertical') === 'vertical' ? 11 : 9, xFinish: getPluginSetting('boardLayout', 'vertical') === 'vertical' ? 12 : 10, yStart: 1, yFinish: 4 },
+        className: zoneTint.battlefield,
+        region: { xStart: 11, xFinish: 12, yStart: 1, yFinish: 4 },
         content: () => (
           <DropZone id={`${p}:legend`}>
-            <div class="zone-inner">
-              <span class="zone-label">Legend</span>
+            <ZoneInner label="Legend">
               <ZoneCards deckId={`${p}:legend`} zone={`${p}:legend`} />
-            </div>
+            </ZoneInner>
           </DropZone>
         ),
       },
       {
         id: `${p}:champion`,
-        className: "zone-battlefield",
-        region: { xStart: getPluginSetting('boardLayout', 'vertical') === 'vertical' ? 12 : 10, xFinish: 13, yStart: 1, yFinish: 4 },
+        className: zoneTint.battlefield,
+        region: { xStart: 12, xFinish: 13, yStart: 1, yFinish: 4 },
         content: () => (
           <DropZone id={`${p}:champion`}>
-            <div class="zone-inner">
-              <span class="zone-label">Champion</span>
+            <ZoneInner label="Champion">
               <ZoneCards deckId={`${p}:champion`} zone={`${p}:champion`} />
-            </div>
+            </ZoneInner>
           </DropZone>
         ),
       },
       {
         id: `${p}:base`,
-        className: "zone-base",
+        className: zoneTint.base,
         region: { xStart: 1, xFinish: 12, yStart: 4, yFinish: 7 },
         content: () => (
           <DropZone id={`${p}:base`}>
-            <div class="zone-inner">
-              <span class="zone-label">Base</span>
+            <ZoneInner label="Base">
               <ZoneCards deckId={`${p}:base`} zone={`${p}:base`} />
-            </div>
+            </ZoneInner>
           </DropZone>
         ),
       },
       {
         id: `${p}:mainDeck`,
-        className: "zone-deck",
+        className: zoneTint.deck,
         region: { xStart: 12, xFinish: 13, yStart: 4, yFinish: 7 },
         content: () => (
           <DropZone id={`${p}:mainDeck`}>
-            <div
-              class="deck-zone deck-zone--clickable"
-              onClick={() => moveTopCard(`${p}:mainDeck`, `${p}:hand`)}
-              onContextMenu={(e) => { e.preventDefault(); showDeckContextMenu(e.clientX, e.clientY, `${p}:mainDeck`); }}
-              onMouseDown={(e) => { if (e.button === 0) e.preventDefault(); }}
+            <DeckStack
+              count={cardsInDeck(`${p}:mainDeck`).length}
               title="Main Deck — click to draw, right-click for options"
-            >
-              <div class="deck-stack-wrap">
-                <div class="deck-card-back" />
-                <div class="deck-card-back" />
-                <div class="deck-card-back" />
-                <span class="deck-count-overlay">{cardsInDeck(`${p}:mainDeck`).length}</span>
-              </div>
-            </div>
+              onClick={() => moveTopCard(`${p}:mainDeck`, `${p}:hand`)}
+              onContextMenu={(e) => showDeckContextMenu(e.clientX, e.clientY, `${p}:mainDeck`)}
+            />
           </DropZone>
         ),
       },
       {
         id: `${p}:UnplayedRunes`,
-        className: "zone-deck",
+        className: zoneTint.deck,
         region: { xStart: 1, xFinish: 2, yStart: 7, yFinish: 9 },
         content: () => (
           <DropZone id={`${p}:UnplayedRunes`}>
-            <div
-              class="deck-zone deck-zone--clickable"
-              onClick={() => moveTopCard(`${p}:UnplayedRunes`, `${p}:PlayedRunes`)}
-              onContextMenu={(e) => { e.preventDefault(); showDeckContextMenu(e.clientX, e.clientY, `${p}:UnplayedRunes`); }}
-              onMouseDown={(e) => { if (e.button === 0) e.preventDefault(); }}
+            <DeckStack
+              count={cardsInDeck(`${p}:UnplayedRunes`).length}
               title="Rune Deck — click to reveal top card, right-click for options"
-            >
-              <div class="deck-stack-wrap">
-                <div class="deck-card-back" />
-                <div class="deck-card-back" />
-                <div class="deck-card-back" />
-                <span class="deck-count-overlay">{cardsInDeck(`${p}:UnplayedRunes`).length}</span>
-              </div>
-            </div>
+              onClick={() => moveTopCard(`${p}:UnplayedRunes`, `${p}:PlayedRunes`)}
+              onContextMenu={(e) => showDeckContextMenu(e.clientX, e.clientY, `${p}:UnplayedRunes`)}
+            />
           </DropZone>
         ),
       },
       {
         id: `${p}:PlayedRunes`,
-        className: "zone-runes",
+        className: zoneTint.runes,
         region: { xStart: 2, xFinish: 12, yStart: 7, yFinish: 9 },
         content: () => (
           <DropZone id={`${p}:PlayedRunes`}>
-            <div class="zone-inner">
-              <span class="zone-label">Runes</span>
+            <ZoneInner label="Runes">
               <ZoneCards deckId={`${p}:PlayedRunes`} zone={`${p}:PlayedRunes`} />
-            </div>
+            </ZoneInner>
           </DropZone>
         ),
       },
       {
         id: `${p}:trash`,
-        className: "zone-deck",
+        className: zoneTint.deck,
         region: { xStart: 12, xFinish: 13, yStart: 7, yFinish: 9 },
         content: () => (
           <DropZone id={`${p}:trash`}>
-            <div
-              class="deck-zone deck-zone--clickable"
-              onClick={() => moveTopCard(`${p}:trash`, `${p}:hand`)}
-              onContextMenu={(e) => { e.preventDefault(); showDeckContextMenu(e.clientX, e.clientY, `${p}:trash`); }}
-              onMouseDown={(e) => { if (e.button === 0) e.preventDefault(); }}
+            <DeckStack
+              count={cardsInDeck(`${p}:trash`).length}
               title="Trash — click to take top card to hand, right-click for options"
-            >
-              <div class="deck-stack-wrap">
-                <div class="deck-card-back" />
-                <div class="deck-card-back" />
-                <div class="deck-card-back" />
-                <span class="deck-count-overlay">{cardsInDeck(`${p}:trash`).length}</span>
-              </div>
-            </div>
+              onClick={() => moveTopCard(`${p}:trash`, `${p}:hand`)}
+              onContextMenu={(e) => showDeckContextMenu(e.clientX, e.clientY, `${p}:trash`)}
+            />
           </DropZone>
         ),
       },
