@@ -10,6 +10,9 @@ import { joinRoom, requestJoin, leaveRoom, broadcastPlayerLeave } from "./utils/
 import { addPlayer, myUserId, setCurrentPlayer, gameState, resetGameState } from "./stores/gameStore";
 import { announcePublicGame, stopAnnouncingGame, updateLobbyPlayerCount } from "./utils/lobby";
 import { upsertSavedGame, removeSavedGame } from "./stores/savedGamesStore";
+import { playerSettings } from "./stores/playerSettingsStore";
+import { sendTurnNotification } from "./utils/notifications";
+import { startWatchingRoom, stopWatchingRoom } from "./utils/notificationWatcher";
 
 function Root() {
   const [gameStarted, setGameStarted] = createSignal(false);
@@ -60,6 +63,7 @@ function Root() {
   }
 
   function handleJoinGame(roomCode: string, playerName: string) {
+    stopWatchingRoom(roomCode); // stop passive watcher now that we're actively in the room
     setCurrentRoomCode(roomCode);
     setCurrentPlayerName(playerName);
 
@@ -92,10 +96,20 @@ function Root() {
       stopAnnouncingGame();
     }
 
-    // Disconnect from the room channel (player stays in other clients' state).
+    // Disconnect from the active game channel; the notification watcher below
+    // opens its own lightweight channel on a separate topic for this room.
     leaveRoom();
 
-    // Reset local state for a clean slate if we join something else.
+    // Start passively watching for our turn so we can fire a desktop notification.
+    const roomCode = currentRoomCode();
+    const playerName = currentPlayerName();
+    startWatchingRoom(roomCode, playerName, async (name) => {
+      if (playerSettings().notificationsEnabled) {
+        await sendTurnNotification(name);
+      }
+    });
+
+    // Reset local UI state for a clean slate.
     resetGameState();
 
     setGameStarted(false);
@@ -115,6 +129,7 @@ function Root() {
       stopAnnouncingGame();
     }
 
+    stopWatchingRoom(currentRoomCode()); // cancel any pending notification for this room
     leaveRoom();
     resetGameState();
 

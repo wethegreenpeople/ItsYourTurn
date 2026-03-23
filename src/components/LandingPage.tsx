@@ -1,6 +1,7 @@
 import { createMemo, createSignal, For, onCleanup, Show } from "solid-js";
 import { subscribeLobby, unsubscribeLobby, type LobbyEntry } from "../utils/lobby";
 import { savedGames, loadSavedGames, removeSavedGame } from "../stores/savedGamesStore";
+import { PlayerSettings } from "./PlayerSettings";
 
 // Load all plugin info.json files at build time
 const pluginModules = import.meta.glob("../../plugins/**/info.json", { eager: true });
@@ -34,6 +35,7 @@ export function LandingPage(props: LandingPageProps) {
   // Modal visibility
   const [showHost, setShowHost] = createSignal(false);
   const [showJoin, setShowJoin] = createSignal(false);
+  const [showSettings, setShowSettings] = createSignal(false);
 
   // Host form state
   const [selectedPlugin, setSelectedPlugin] = createSignal(plugins[0]?.id ?? "");
@@ -843,6 +845,37 @@ export function LandingPage(props: LandingPageProps) {
             </button>
           </div>
         </div>
+      </Show>
+
+      {/* ══════════════ GEAR BUTTON ══════════════ */}
+      <button
+        onClick={() => setShowSettings(true)}
+        title="Settings"
+        style="
+          position:absolute; top:16px; right:16px; z-index:40;
+          width:36px; height:36px; border-radius:10px;
+          border:1px solid rgba(58,61,84,.8); background:rgba(255,255,255,.04);
+          color:rgba(197,195,216,.5); font-size:1.1rem; cursor:pointer;
+          display:flex; align-items:center; justify-content:center;
+          transition:all .15s ease;
+        "
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(201,168,76,.5)";
+          (e.currentTarget as HTMLButtonElement).style.color = "#c9a84c";
+          (e.currentTarget as HTMLButtonElement).style.background = "rgba(201,168,76,.08)";
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(58,61,84,.8)";
+          (e.currentTarget as HTMLButtonElement).style.color = "rgba(197,195,216,.5)";
+          (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,.04)";
+        }}
+      >
+        ⚙
+      </button>
+
+      {/* ══════════════ SETTINGS MODAL ══════════════ */}
+      <Show when={showSettings()}>
+        <PlayerSettings onClose={() => setShowSettings(false)} />
       </Show>
     </div>
   );
