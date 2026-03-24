@@ -10,7 +10,9 @@
       "Bash(find 'C:\\\\Users\\\\wethe\\\\Documents\\\\TCG Online' -name *.css -type f)",
       "Bash(find 'C:\\\\Users\\\\wethe\\\\Documents\\\\TCG Online' -maxdepth 2 -type f -name *.config.*)",
       "Bash(find 'C:\\\\Users\\\\wethe\\\\Documents\\\\TCG Online' -maxdepth 1 -name *.config.* -o -name package.json)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(npm install:*)",
+      "Bash(pnpm add:*)"
     ]
   }
 }
