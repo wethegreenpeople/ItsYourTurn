@@ -157,6 +157,7 @@ function Root() {
       <App
         key={currentRoomCode()}
         isHost={isHost()}
+        pluginId={currentGameType()}
         onReturnToMenu={handleReturnToMenu}
         onQuitGame={handleQuitGame}
       />

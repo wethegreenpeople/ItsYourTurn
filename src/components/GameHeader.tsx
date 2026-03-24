@@ -7,7 +7,6 @@ import {
   myUserId,
   type Player,
 } from "../stores/gameStore";
-import { freePlaceMode, setFreePlaceMode } from "../stores/freePlaceStore";
 import { setShowSettingsModal } from "../stores/settingsStore";
 import { LoadDeckModal } from "./LoadDeckModal";
 import { cardsInDeck } from "../stores/deckStore";
@@ -117,20 +116,6 @@ export const GameHeader = (props: {
     </Show>
   );
 
-  const FreePlaceBtn = (p: { onClick?: () => void; showLabel?: boolean }) => (
-    <button
-      class={gbarBtn}
-      classList={{ "!border-gold/45 !text-gold !bg-gold/8": freePlaceMode() }}
-      onClick={p.onClick ?? (() => setFreePlaceMode(v => !v))}
-      title={freePlaceMode() ? "Switch to snap layout" : "Switch to free placement"}
-    >
-      <span class={gbarIcon}>{freePlaceMode() ? "⊠" : "⊞"}</span>
-      <Show when={p.showLabel}>
-        <span class={gbarLabel}>{freePlaceMode() ? "Snap" : "Free"}</span>
-      </Show>
-    </button>
-  );
-
   const SettingsBtn = (p: { onClick?: () => void; showLabel?: boolean }) => (
     <button
       class={gbarBtn}
@@ -188,7 +173,6 @@ export const GameHeader = (props: {
         {/* Desktop actions */}
         <div class="hidden lg:flex lg:flex-col lg:items-stretch lg:gap-2 lg:pt-4 lg:border-t lg:border-raised lg:mt-4 lg:flex-shrink-0">
           <EndTurnBtn />
-          <FreePlaceBtn showLabel />
           <LoadDeckModal />
           <SideboardBtn showLabel />
           <MsgToggleBtn showLabel />
@@ -206,7 +190,6 @@ export const GameHeader = (props: {
           class="absolute top-full left-0 right-0 z-[200] flex flex-col gap-1 p-2 border-b border-raised shadow-[0_8px_24px_rgba(0,0,0,0.5)]"
           style={{ background: "linear-gradient(180deg, #1a1c19 0%, #171916 100%)" }}
         >
-          <FreePlaceBtn onClick={() => { setFreePlaceMode(v => !v); closeMenu(); }} showLabel />
           <LoadDeckModal onClose={closeMenu} />
           <SideboardBtn onClick={() => { openDeckSearch(`${myUserId}:sideboard`, "Sideboard"); closeMenu(); }} showLabel />
           <SettingsBtn onClick={() => { setShowSettingsModal(true); closeMenu(); }} showLabel />

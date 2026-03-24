@@ -57,6 +57,39 @@ body { margin: 0; overflow: hidden; }
   [data-zone$=":trash"]         { grid-column: 12 / 13 !important; grid-row: 4 / 5 !important; }
 }
 
+/* ===================== MOBILE FREE-PLACE LAYOUT ===================== */
+@media (max-width: 767px) {
+  .game-grid[data-plugin="riftbound-freeplace"] {
+    grid-template-columns: repeat(12, 1fr) !important;
+    grid-template-rows: 4fr 1fr !important;
+  }
+  .game-grid[data-plugin="riftbound-freeplace"] [data-zone$=":board"] {
+    grid-column: 1 / 13 !important;
+    grid-row: 1 / 2 !important;
+  }
+  .game-grid[data-plugin="riftbound-freeplace"] [data-zone$=":mainDeck"] {
+    grid-column: 1 / 5 !important;
+    grid-row: 2 / 3 !important;
+  }
+  .game-grid[data-plugin="riftbound-freeplace"] [data-zone$=":UnplayedRunes"] {
+    grid-column: 5 / 9 !important;
+    grid-row: 2 / 3 !important;
+  }
+  .game-grid[data-plugin="riftbound-freeplace"] [data-zone$=":trash"] {
+    grid-column: 9 / 13 !important;
+    grid-row: 2 / 3 !important;
+  }
+  /* Card sizing inside the free-place board zone on mobile */
+  .game-grid[data-plugin="riftbound-freeplace"] .card-freeplace-wrap .tcg-card {
+    height: clamp(72px, 22vw, 100px) !important;
+    width: calc(clamp(72px, 22vw, 100px) * 0.718) !important;
+  }
+  .game-grid[data-plugin="riftbound-freeplace"] .card-freeplace-wrap .tcg-card--horizontal {
+    width: clamp(72px, 22vw, 100px) !important;
+    height: calc(clamp(72px, 22vw, 100px) * 0.718) !important;
+  }
+}
+
 /* ===================== ZONE PANELS ===================== */
 .zone-panel {
   position: relative;
@@ -320,7 +353,7 @@ body.targeting-mode [data-card-id] .tcg-card {
 
 /* ===================== FREE PLACE MODE ===================== */
 .zone-cards--free { position: relative; flex-wrap: nowrap; overflow: visible; }
-.card-freeplace-wrap { position: absolute; transform: translate(-50%, -50%); z-index: 1; }
+.card-freeplace-wrap { position: absolute; transform: translate(-50%, -50%) scale(0.9); z-index: 1; }
 .card-freeplace-wrap:hover { z-index: 10; }
 
 /* ===================== MULTI-CARD SELECTION ===================== */

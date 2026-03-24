@@ -16,7 +16,7 @@ interface PluginInfo { id: string; name: string; maxPlayers: number; }
 
 const plugins: PluginInfo[] = Object.entries(pluginModules).map(([, mod]: [string, any]) => {
   const data = mod.default ?? mod;
-  return { id: data.name, name: data.name ?? "Unknown", maxPlayers: data.maxPlayers ?? 4 };
+  return { id: data.id ?? data.name, name: data.name ?? "Unknown", maxPlayers: data.maxPlayers ?? 4 };
 });
 
 interface LandingPageProps {

@@ -2,6 +2,7 @@ import { createEffect, createSignal, onCleanup, Show } from "solid-js";
 import { useDragDropContext } from "@thisbeyond/solid-dnd";
 import { viewingPlayerId, setViewingPlayerId } from "../stores/boardViewStore";
 import { gameState } from "../stores/gameStore";
+import { getActivePlugin } from "../stores/pluginStore";
 
 /**
  * Handles two mobile-only drag gestures for switching the viewed player board:
@@ -61,8 +62,8 @@ export const DragBoardSwitcher = () => {
         }
       }
 
-      // 2. Left / right edge zones — mobile only
-      if (window.innerWidth >= 768) {
+      // 2. Left / right edge zones — mobile only, not for free-place plugin
+      if (window.innerWidth >= 768 || getActivePlugin()?.id === "riftbound-freeplace") {
         cancelSwitch();
         setActiveEdge(null);
         return;

@@ -40,8 +40,8 @@ export const DropZone = (props: { id: string; children: JSX.Element }) => {
   );
 };
 
-function App(props: { isHost?: boolean; onReturnToMenu?: () => void; onQuitGame?: () => void }) {
-  const plugin: Plugin = Plugins.filter(s => s.id === "riftbound")[0];
+function App(props: { pluginId?: string; isHost?: boolean; onReturnToMenu?: () => void; onQuitGame?: () => void }) {
+  const plugin: Plugin | undefined = Plugins.find(s => s.id === props.pluginId) ?? Plugins[0];
 
   // Set active plugin so lifecycle hooks work from deckStore/gameStore
   if (plugin) setActivePlugin(plugin);
@@ -195,6 +195,7 @@ function App(props: { isHost?: boolean; onReturnToMenu?: () => void; onQuitGame?
                   <div class="game-board flex-1 min-h-0 p-1.5 md:p-2.5 relative overflow-hidden md:overflow-visible">
                     <div
                       class="game-grid h-full w-full grid gap-[3px] md:gap-1 bg-base/40 border border-raised rounded-lg md:rounded-[10px] p-[3px] md:p-1"
+                      data-plugin={plugin?.id ?? ""}
                       style={{
                         "grid-template-columns": "var(--plugin-grid-cols, repeat(12, 1fr))",
                         "grid-template-rows": "var(--plugin-grid-rows, repeat(12, 1fr))",

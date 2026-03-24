@@ -126,22 +126,26 @@ export function HostModal(props: HostModalProps) {
         {/* Game type */}
         <div class="mb-5">
           <p class="text-[.68rem] font-semibold tracking-[.3em] uppercase mb-2 m-0" style="color:rgba(245,203,92,.7)">Game Type</p>
-          <div class="flex flex-col gap-1">
+          <select
+            class="w-full rounded-[9px] px-4 py-3 text-base outline-none transition-all duration-150 cursor-pointer appearance-none"
+            style={`${inputStyle};background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(245,203,92,.5)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:38px`}
+            value={selectedPlugin()}
+            onChange={(e) => {
+              setSelectedPlugin(e.currentTarget.value);
+              const p = props.plugins.find(p => p.id === e.currentTarget.value);
+              if (p) setPlayerCount(Math.min(playerCount(), p.maxPlayers));
+            }}
+            onFocus={inputFocus as any}
+            onBlur={inputBlur as any}
+          >
             <For each={props.plugins}>
               {(plugin) => (
-                <button
-                  onClick={() => { setSelectedPlugin(plugin.id); setPlayerCount(Math.min(playerCount(), plugin.maxPlayers)); }}
-                  class="flex items-center justify-between px-4 py-3 rounded-[9px] text-left cursor-pointer text-base font-medium transition-all duration-150 border"
-                  style={selectedPlugin() === plugin.id
-                    ? "border-color:rgba(245,203,92,.5);background:rgba(245,203,92,.08);color:#f5cb5c"
-                    : "border-color:rgba(82,82,91,.6);background:rgba(18,18,19,.5);color:rgba(207,219,213,.6)"}
-                >
-                  <span>{plugin.name}</span>
-                  <span class="text-[.7rem] opacity-50 tracking-[.05em]">max {plugin.maxPlayers}</span>
-                </button>
+                <option value={plugin.id} style="background:#1b1b1e;color:#e8eddf">
+                  {plugin.name} — max {plugin.maxPlayers}
+                </option>
               )}
             </For>
-          </div>
+          </select>
         </div>
 
         {/* Player count */}
