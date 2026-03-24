@@ -15,9 +15,12 @@ import { openDeckSearch } from "../stores/deckContextMenuStore";
 import { MessagingPanel } from "./MessagingPanel";
 import { LeaveSection } from "./LeaveSection";
 
-// ── Shared button base classes ──
+// ── Shared gamebar button classes ──
 const iconBtn = "flex items-center justify-center flex-shrink-0 rounded cursor-pointer transition-colors duration-150";
-const actionBtn = `${iconBtn} gap-1 px-2 py-1.5 bg-surface/85 border border-raised text-text-muted whitespace-nowrap`;
+const gbarBase = "flex items-center gap-2 w-full px-3 py-2 rounded bg-surface/85 border border-raised text-text-muted cursor-pointer transition-colors duration-150";
+const gbarBtn  = `${gbarBase} hover:border-gold/35 hover:text-gold`;
+const gbarIcon = "text-sm leading-none flex-shrink-0 w-[1.1rem] text-center";
+const gbarLabel = "flex-1 text-center text-[clamp(9px,.8vw,12px)] font-bold tracking-widest uppercase";
 
 const PlayerPanel = (props: { player: Player }) => {
   const isLocal = () => props.player.id === myUserId;
@@ -81,52 +84,62 @@ export const GameHeader = (props: {
 
   const EndTurnBtn = (p: { class?: string }) => (
     <button
-      class={`end-turn-btn flex items-center justify-center px-[7px] py-[5px] bg-[rgba(40,36,20,0.85)] border border-gold/35 rounded-[5px] cursor-pointer transition-[background,border-color,box-shadow] duration-200 whitespace-nowrap ${p.class ?? ""}`}
-      classList={{ "end-turn-btn--ready": isMyTurn() }}
+      class={`end-turn-btn flex items-center gap-2 w-full px-3 py-2 rounded bg-gold/10 border border-gold/40 text-gold cursor-pointer transition-colors duration-150 hover:bg-gold/18 hover:border-gold/60 ${p.class ?? ""}`}
+      style={isMyTurn() ? { animation: "end-turn-glow 2s ease-in-out infinite" } : undefined}
       onClick={endTurn}
     >
-      <span
-        class="font-body text-[10px] font-bold tracking-[0.1em] uppercase"
-        style={{ "font-family": "var(--plugin-font-body, 'Inter', system-ui, sans-serif)", color: "var(--plugin-accent, #f5cb5c)" }}
-      >
-        End Turn
-      </span>
+      <span class={gbarIcon}>▷</span>
+      <span class={gbarLabel}>End Turn</span>
     </button>
   );
 
-  const MsgToggleBtn = (p: { class?: string }) => (
-    <button
-      class={`${iconBtn} border border-raised bg-surface/85 text-text-muted text-[13px] p-0
-              hover:border-gold/35 hover:text-gold ${p.class ?? ""}`}
-      classList={{ "!border-gold/45 !text-gold !bg-surface/90": gameState.showMessaging }}
-      onClick={toggleMessaging}
-      aria-label="Toggle chat"
-    >✉</button>
+  const MsgToggleBtn = (p: { class?: string; showLabel?: boolean }) => (
+    <Show
+      when={p.showLabel}
+      fallback={
+        <button
+          class={`${iconBtn} border border-raised bg-surface/85 text-text-muted text-[13px] p-0 hover:border-gold/35 hover:text-gold ${p.class ?? ""}`}
+          classList={{ "!border-gold/45 !text-gold !bg-surface/90": gameState.showMessaging }}
+          onClick={toggleMessaging}
+          aria-label="Toggle chat"
+        >✉</button>
+      }
+    >
+      <button
+        class={`${gbarBtn} ${p.class ?? ""}`}
+        classList={{ "!border-gold/45 !text-gold !bg-gold/8": gameState.showMessaging }}
+        onClick={toggleMessaging}
+        aria-label="Toggle chat"
+      >
+        <span class={gbarIcon}>✉</span>
+        <span class={gbarLabel}>Chat</span>
+      </button>
+    </Show>
   );
 
   const FreePlaceBtn = (p: { onClick?: () => void; showLabel?: boolean }) => (
     <button
-      class={`${actionBtn} hover:border-gold/35 hover:text-gold`}
+      class={gbarBtn}
       classList={{ "!border-gold/45 !text-gold !bg-gold/8": freePlaceMode() }}
       onClick={p.onClick ?? (() => setFreePlaceMode(v => !v))}
       title={freePlaceMode() ? "Switch to snap layout" : "Switch to free placement"}
     >
-      <span class="text-sm leading-none">{freePlaceMode() ? "⊠" : "⊞"}</span>
+      <span class={gbarIcon}>{freePlaceMode() ? "⊠" : "⊞"}</span>
       <Show when={p.showLabel}>
-        <span class="text-[clamp(9px,.8vw,12px)] font-bold tracking-widest uppercase">{freePlaceMode() ? "Snap" : "Free"}</span>
+        <span class={gbarLabel}>{freePlaceMode() ? "Snap" : "Free"}</span>
       </Show>
     </button>
   );
 
   const SettingsBtn = (p: { onClick?: () => void; showLabel?: boolean }) => (
     <button
-      class={`${actionBtn} hover:border-gold/35 hover:text-gold`}
+      class={gbarBtn}
       onClick={p.onClick ?? (() => setShowSettingsModal(true))}
       title="Settings"
     >
-      <span class="text-sm leading-none">⚙</span>
+      <span class={gbarIcon}>⚙</span>
       <Show when={p.showLabel}>
-        <span class="text-[clamp(9px,.8vw,12px)] font-bold tracking-widest uppercase">Settings</span>
+        <span class={gbarLabel}>Settings</span>
       </Show>
     </button>
   );
@@ -134,13 +147,13 @@ export const GameHeader = (props: {
   const SideboardBtn = (p: { onClick?: () => void; showLabel?: boolean }) => (
     <Show when={sideboardCount() > 0}>
       <button
-        class={`${actionBtn} hover:border-gold/35 hover:text-gold`}
+        class={gbarBtn}
         onClick={p.onClick ?? (() => openDeckSearch(`${myUserId}:sideboard`, "Sideboard"))}
         title="View sideboard"
       >
-        <span class="text-sm leading-none">⧉</span>
+        <span class={gbarIcon}>⧉</span>
         <Show when={p.showLabel}>
-          <span class="text-[clamp(9px,.8vw,12px)] font-bold tracking-widest uppercase">Sideboard ({sideboardCount()})</span>
+          <span class={gbarLabel}>Sideboard ({sideboardCount()})</span>
         </Show>
       </button>
     </Show>
@@ -178,7 +191,7 @@ export const GameHeader = (props: {
           <FreePlaceBtn showLabel />
           <LoadDeckModal />
           <SideboardBtn showLabel />
-          <MsgToggleBtn class="w-full h-9 text-base" />
+          <MsgToggleBtn showLabel />
           <SettingsBtn showLabel />
           <Show when={props.onReturnToMenu || props.onQuitGame}>
             <LeaveSection onReturnToMenu={props.onReturnToMenu} onQuitGame={props.onQuitGame} />
@@ -199,24 +212,20 @@ export const GameHeader = (props: {
           <SettingsBtn onClick={() => { setShowSettingsModal(true); closeMenu(); }} showLabel />
           <Show when={props.onReturnToMenu}>
             <button
-              class="flex items-center gap-2 w-full px-3 py-2.5 rounded-lg border border-info/25 bg-info/8
-                     text-info/85 text-[.82rem] font-semibold cursor-pointer text-left
-                     transition-colors duration-150 hover:bg-info/16 hover:border-info/50"
+              class={gbarBtn}
               onClick={() => { closeMenu(); props.onReturnToMenu!(); }}
             >
-              <span class="text-[.9rem] flex-shrink-0">⊞</span>
-              <span class="flex-1">Return to Menu</span>
+              <span class={gbarIcon}>⤺</span>
+              <span class={gbarLabel}>Return to Menu</span>
             </button>
           </Show>
           <Show when={props.onQuitGame}>
             <button
-              class="flex items-center gap-2 w-full px-3 py-2.5 rounded-lg border border-danger/25 bg-danger/8
-                     text-danger/85 text-[.82rem] font-semibold cursor-pointer text-left
-                     transition-colors duration-150 hover:bg-danger/16 hover:border-danger/50"
+              class={`${gbarBase} hover:border-danger/50 hover:text-danger`}
               onClick={() => { closeMenu(); props.onQuitGame!(); }}
             >
-              <span class="text-[.9rem] flex-shrink-0">✕</span>
-              <span class="flex-1">Quit Game</span>
+              <span class={gbarIcon}>✕</span>
+              <span class={gbarLabel}>Quit Game</span>
             </button>
           </Show>
         </div>

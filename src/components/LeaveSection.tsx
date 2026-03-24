@@ -5,6 +5,10 @@ interface LeaveSectionProps {
   onQuitGame?: () => void;
 }
 
+const btn  = "flex items-center gap-2 w-full px-3 py-2 rounded bg-surface/85 border border-raised text-text-muted cursor-pointer transition-colors duration-150";
+const icon = "text-sm leading-none flex-shrink-0 w-[1.1rem] text-center";
+const lbl  = "flex-1 text-center text-[clamp(9px,.8vw,12px)] font-bold tracking-widest uppercase";
+
 export function LeaveSection(props: LeaveSectionProps) {
   const [showMenu, setShowMenu] = createSignal(false);
 
@@ -14,50 +18,42 @@ export function LeaveSection(props: LeaveSectionProps) {
         when={showMenu()}
         fallback={
           <button
-            class="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-rim/60 bg-transparent
-                   text-text-muted/55 text-[.85rem] font-medium cursor-pointer
-                   transition-colors duration-150 hover:border-gold/35 hover:text-gold/75 hover:bg-gold/6"
+            class={`${btn} hover:border-gold/35 hover:text-gold`}
             onClick={() => setShowMenu(true)}
             title="Leave game options"
           >
-            <span class="text-base">⤺</span>
-            <span class="flex-1 text-left">Leave</span>
+            <span class={icon}>⤺</span>
+            <span class={lbl}>Leave</span>
           </button>
         }
       >
         <div class="flex flex-col gap-1">
           <Show when={props.onReturnToMenu}>
             <button
-              class="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-info/25 bg-info/8
-                     text-info/85 text-[.82rem] font-semibold cursor-pointer text-left
-                     transition-colors duration-150 hover:bg-info/16 hover:border-info/50 hover:text-info"
+              class={`${btn} hover:border-gold/35 hover:text-gold`}
               onClick={() => { setShowMenu(false); props.onReturnToMenu!(); }}
               title="Return to menu (you stay in the game)"
             >
-              <span class="text-[.9rem] flex-shrink-0">⊞</span>
-              <span class="flex-1">Menu</span>
+              <span class={icon}>⤺</span>
+              <span class={lbl}>Menu</span>
             </button>
           </Show>
           <Show when={props.onQuitGame}>
             <button
-              class="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-danger/25 bg-danger/8
-                     text-danger/85 text-[.82rem] font-semibold cursor-pointer text-left
-                     transition-colors duration-150 hover:bg-danger/16 hover:border-danger/50 hover:text-danger"
+              class={`${btn} hover:border-danger/50 hover:text-danger`}
               onClick={() => { setShowMenu(false); props.onQuitGame!(); }}
               title="Quit game (removes you from the game)"
             >
-              <span class="text-[.9rem] flex-shrink-0">✕</span>
-              <span class="flex-1">Quit</span>
+              <span class={icon}>✕</span>
+              <span class={lbl}>Quit</span>
             </button>
           </Show>
           <button
-            class="flex items-center gap-2 w-full px-3 py-2 rounded-lg border border-rim/50 bg-transparent
-                   text-text-muted/45 text-[.82rem] font-semibold cursor-pointer text-left
-                   transition-colors duration-150 hover:border-rim hover:text-text-muted/75"
+            class={`${btn} text-text-muted/45 hover:border-raised hover:text-text-muted/75`}
             onClick={() => setShowMenu(false)}
           >
-            <span class="text-[.9rem] flex-shrink-0">↩</span>
-            <span class="flex-1">Back</span>
+            <span class={icon}>↩</span>
+            <span class={lbl}>Back</span>
           </button>
         </div>
       </Show>

@@ -258,6 +258,12 @@ body.targeting-mode [data-card-id] .tcg-card {
   50% { opacity: 0.55; }
 }
 
+/* ===================== END TURN BUTTON — ready state glow ===================== */
+@keyframes end-turn-glow {
+  0%, 100% { box-shadow: 0 0 6px 0 rgba(245, 203, 92, 0.15); border-color: rgba(245, 203, 92, 0.55); }
+  50%       { box-shadow: 0 0 18px 2px rgba(245, 203, 92, 0.3); border-color: rgba(245, 203, 92, 0.8); }
+}
+
 /* ===================== SCORE BUTTON — hover/active ===================== */
 .score-btn:hover { background: rgba(245, 203, 92, 0.2); border-color: rgba(245, 203, 92, 0.55); }
 .score-btn:active { background: rgba(245, 203, 92, 0.3); transform: scale(0.92); }

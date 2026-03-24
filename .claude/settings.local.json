@@ -5,7 +5,11 @@
       "Bash(find '/c/Users/wethe/Documents/TCG Online/src' -name *zone* -o -name *board* -o -name *field* -o -name *setting* -o -name *config*)",
       "Bash(npx tsc:*)",
       "Bash(find 'C:\\\\Users\\\\wethe\\\\Documents\\\\TCG Online' -maxdepth 2 -type f \\\\\\(-name README* -o -name .env* -o -name *.config.* \\\\\\))",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "Bash(find 'C:\\\\Users\\\\wethe\\\\Documents\\\\TCG Online\\\\src' -type f \\\\\\(-name *.tsx -o -name *.ts \\\\\\))",
+      "Bash(find 'C:\\\\Users\\\\wethe\\\\Documents\\\\TCG Online' -name *.css -type f)",
+      "Bash(find 'C:\\\\Users\\\\wethe\\\\Documents\\\\TCG Online' -maxdepth 2 -type f -name *.config.*)",
+      "Bash(find 'C:\\\\Users\\\\wethe\\\\Documents\\\\TCG Online' -maxdepth 1 -name *.config.* -o -name package.json)"
     ]
   }
 }

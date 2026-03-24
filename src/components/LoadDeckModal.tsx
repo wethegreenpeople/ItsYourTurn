@@ -58,14 +58,11 @@ export const LoadDeckModal = (props: { onClose?: () => void } = {}) => {
   return (
     <>
       <button
-        class="flex items-center gap-1 px-2 py-1.5 bg-surface/85 border border-raised rounded cursor-pointer
-               text-text-muted whitespace-nowrap transition-colors duration-150
-               hover:border-gold/35 hover:text-gold
-               lg:px-2.5 lg:py-2 lg:justify-center"
+        class="flex items-center gap-2 w-full px-3 py-2 rounded bg-surface/85 border border-raised text-text-muted cursor-pointer transition-colors duration-150 hover:border-gold/35 hover:text-gold"
         onClick={openModal}
       >
-        <span class="text-sm leading-none">⊕</span>
-        <span class="hidden lg:inline text-[clamp(9px,.8vw,12px)] font-bold tracking-widest uppercase">Load Deck</span>
+        <span class="text-sm leading-none flex-shrink-0 w-[1.1rem] text-center">⊕</span>
+        <span class="flex-1 text-center text-[clamp(9px,.8vw,12px)] font-bold tracking-widest uppercase">Load Deck</span>
       </button>
 
       <Show when={open()}>
