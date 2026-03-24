@@ -111,6 +111,7 @@ function Root() {
     setGameStarted(false);
     setIsHost(false);
     setIsPublicGame(false);
+    setIsConnecting(false);
   }
 
   async function handleQuitGame() {
@@ -135,6 +136,7 @@ function Root() {
     setGameStarted(false);
     setIsHost(false);
     setIsPublicGame(false);
+    setIsConnecting(false);
   }
 
   return (
