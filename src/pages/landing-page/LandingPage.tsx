@@ -10,7 +10,7 @@ import { LobbyList } from "./components/LobbyList";
 import { supabase } from "../../utils/supabase";
 
 
-const pluginModules = import.meta.glob("../../plugins/**/info.json", { eager: true });
+const pluginModules = import.meta.glob("/plugins/**/info.json", { eager: true });
 
 interface PluginInfo { id: string; name: string; maxPlayers: number; }
 
@@ -91,6 +91,14 @@ export function LandingPage(props: LandingPageProps) {
       <Show when={lobbyOpen()}>
         <div class="lg:hidden fixed inset-0 z-20 flex flex-col bg-base animate-[lp-slide-right_.32s_cubic-bezier(.22,1,.36,1)_both]"
              style="padding-top:env(safe-area-inset-top,0);padding-bottom:env(safe-area-inset-bottom,0)">
+          <div class="flex items-center gap-3 px-6 pt-5 pb-1 flex-shrink-0">
+            <button
+              class="flex items-center gap-1.5 text-text-muted/50 hover:text-text-muted transition-colors duration-150 cursor-pointer bg-transparent border-none p-0 text-[.8rem]"
+              onClick={closeLobby}
+            >
+              ← Back
+            </button>
+          </div>
           <LobbyHeader />
           <div class="flex-1 overflow-y-auto px-6 py-5" style="scrollbar-width:thin;scrollbar-color:rgba(82,82,91,.5) transparent">
             <LobbyList availableGames={availableGames()} closeLobby={closeLobby} joinGame={props.onJoinGame} playerName={playerName()} />
@@ -216,9 +224,9 @@ export function LandingPage(props: LandingPageProps) {
           plugins={plugins}
           playerName={playerName()}
           onPlayerNameChange={(n) => { setPlayerName(n); submitName(n); }}
-          onConfirm={(code, isPublic, pluginId, count) =>
-            props.onHostGame(code, submitName(playerName()), isPublic, pluginId, count)
-          }
+          onConfirm={(code, isPublic, pluginId, count) => {
+            props.onHostGame(code, submitName(playerName()), isPublic, pluginId, count);
+          }}
           onClose={() => setShowHost(false)}
         />
       </Show>
