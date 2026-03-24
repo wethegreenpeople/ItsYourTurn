@@ -1,5 +1,5 @@
-import { createMemo, createSignal, For, onCleanup, Show } from "solid-js";
-import { subscribeLobby, unsubscribeLobby, type LobbyEntry } from "../../utils/lobby";
+import { createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js";
+import { type LobbyEntry } from "../../utils/lobby";
 import { savedGames, loadSavedGames, removeSavedGame } from "../../stores/savedGamesStore";
 import { PlayerSettings } from "../../components/PlayerSettings";
 import { HostModal } from "../../components/HostModal";
@@ -7,6 +7,7 @@ import { JoinModal } from "../../components/JoinModal";
 import { LobbyHeader } from "./components/LobbyHeader";
 import { SavedGamesList } from "./components/SavedGames";
 import { LobbyList } from "./components/LobbyList";
+import { supabase } from "../../utils/supabase";
 
 
 const pluginModules = import.meta.glob("../../plugins/**/info.json", { eager: true });
@@ -42,19 +43,31 @@ export function LandingPage(props: LandingPageProps) {
   const openLobby = () => {
     setLobbyOpen(true);
     setLobbyLoading(true);
-    subscribeLobby((games) => { setLobbyGames(games); setLobbyLoading(false); });
   };
   const closeLobby = () => {
     setLobbyOpen(false);
-    unsubscribeLobby();
     setLobbyGames([]);
   };
 
   loadSavedGames();
-  onCleanup(() => unsubscribeLobby());
 
   const myGames = createMemo(() => savedGames());
   const availableGames = () => lobbyGames().filter(g => g.currentPlayers < g.maxPlayers);
+
+  onMount(async () => {
+    await supabase.from("room").select("*").eq("public", true).then(({ data }) => {
+      setLobbyGames((data ?? []).map(r => ({
+        userId: r.id,
+        roomCode: r.join_code,
+        gameType: r.plugin,
+        hostName: r.host_name ?? "",
+        currentPlayers: r.active_players,
+        maxPlayers: r.allowed_players,
+        createdAt: new Date(r.created_at).getTime(),
+      })));
+      setLobbyLoading(false);
+    });
+  });
 
   return (
     <div class="fixed inset-0 overflow-hidden bg-base font-body">

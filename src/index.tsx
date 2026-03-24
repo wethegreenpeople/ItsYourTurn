@@ -8,11 +8,11 @@ import App from "./App";
 import { LandingPage } from "./pages/landing-page/LandingPage";
 import { joinRoom, requestJoin, leaveRoom, broadcastPlayerLeave } from "./utils/socket";
 import { addPlayer, myUserId, setCurrentPlayer, gameState, resetGameState } from "./stores/gameStore";
-import { announcePublicGame, stopAnnouncingGame, updateLobbyPlayerCount } from "./utils/lobby";
 import { upsertSavedGame, removeSavedGame } from "./stores/savedGamesStore";
 import { playerSettings } from "./stores/playerSettingsStore";
 import { sendTurnNotification } from "./utils/notifications";
 import { startWatchingRoom, stopWatchingRoom } from "./utils/notificationWatcher";
+import { supabase } from "./utils/supabase";
 
 function Root() {
   const [gameStarted, setGameStarted] = createSignal(false);
@@ -22,13 +22,6 @@ function Root() {
   const [currentPlayerName, setCurrentPlayerName] = createSignal("");
   const [currentMaxPlayers, setCurrentMaxPlayers] = createSignal(2);
   const [isPublicGame, setIsPublicGame] = createSignal(false);
-
-  // When hosting a public game: keep lobby player count in sync.
-  createEffect(() => {
-    if (gameStarted() && isHost() && isPublicGame()) {
-      updateLobbyPlayerCount(gameState.players.length);
-    }
-  });
 
   function handleHostGame(
     roomCode: string,
@@ -46,19 +39,10 @@ function Root() {
     addPlayer(myUserId, playerName);
     setCurrentPlayer({ id: myUserId, name: playerName, score: 20 });
 
-    joinRoom(roomCode, () => {
+    joinRoom(roomCode, async () => {
       setIsHost(true);
+      await supabase.from("room").insert({ allowed_players: maxPlayers, join_code: roomCode, plugin: gameType, public: isPublic, active_players: 1, host_name: playerName });
       setGameStarted(true);
-
-      if (isPublic) {
-        announcePublicGame({
-          roomCode,
-          gameType,
-          hostName: playerName,
-          currentPlayers: 1,
-          maxPlayers,
-        });
-      }
     });
   }
 
@@ -67,7 +51,11 @@ function Root() {
     setCurrentRoomCode(roomCode);
     setCurrentPlayerName(playerName);
 
-    joinRoom(roomCode, () => {
+    joinRoom(roomCode, async () => {
+      const { data: roomData } = await supabase.from("room").select("active_players").eq("join_code", roomCode);
+      if (roomData && roomData[0]) {
+        await supabase.from("room").update({ active_players: roomData[0].active_players + 1 });
+      }
       setGameStarted(true);
     });
     queueMicrotask(() => {
@@ -90,11 +78,6 @@ function Root() {
   async function handleReturnToMenu() {
     // Save a reference to this game so the player can rejoin later.
     await saveCurrentGame();
-
-    // Stop announcing in the public lobby if we were hosting.
-    if (isHost() && isPublicGame()) {
-      stopAnnouncingGame();
-    }
 
     // Disconnect from the active game channel; the notification watcher below
     // opens its own lightweight channel on a separate topic for this room.
@@ -123,12 +106,6 @@ function Root() {
 
     // Tell the room we're permanently leaving.
     broadcastPlayerLeave(myUserId);
-
-    // Stop announcing publicly if we were host.
-    if (isHost() && isPublicGame()) {
-      stopAnnouncingGame();
-    }
-
     stopWatchingRoom(currentRoomCode()); // cancel any pending notification for this room
     leaveRoom();
     resetGameState();
