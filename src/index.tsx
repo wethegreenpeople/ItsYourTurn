@@ -79,6 +79,10 @@ function Root() {
     // Save a reference to this game so the player can rejoin later.
     await saveCurrentGame();
 
+    // Persist current game state to DB so rejoining players can restore it
+    // even if no one is left in the realtime channel.
+    await supabase.from("room").update({ state: JSON.parse(JSON.stringify(gameState)) }).eq("join_code", currentRoomCode());
+
     // Disconnect from the active game channel; the notification watcher below
     // opens its own lightweight channel on a separate topic for this room.
     leaveRoom();
@@ -106,14 +110,11 @@ function Root() {
     // Remove from saved games — the player has permanently left.
     await removeSavedGame(roomCode);
 
-    // Update DB: decrement active players. If host is quitting, also deactivate the room.
-    if (isHost()) {
-      await supabase.from("room").update({ active: false, active_players: 0 }).eq("join_code", roomCode);
-    } else {
-      const { data: roomData } = await supabase.from("room").select("active_players").eq("join_code", roomCode);
-      if (roomData && roomData[0]) {
-        await supabase.from("room").update({ active_players: Math.max(0, roomData[0].active_players - 1) }).eq("join_code", roomCode);
-      }
+    // Update DB: decrement active players, deactivate room if it hits 0.
+    const { data: roomData } = await supabase.from("room").select("active_players").eq("join_code", roomCode);
+    if (roomData && roomData[0]) {
+      const newCount = Math.max(0, roomData[0].active_players - 1);
+      await supabase.from("room").update({ active_players: newCount, active: newCount > 0 }).eq("join_code", roomCode);
     }
 
     // Tell the room we're permanently leaving.

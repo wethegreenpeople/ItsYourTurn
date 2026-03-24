@@ -56,7 +56,7 @@ export function LandingPage(props: LandingPageProps) {
   const availableGames = () => lobbyGames().filter(g => g.currentPlayers < g.maxPlayers && !myGameCodes().has(g.roomCode));
 
   onMount(async () => {
-    await supabase.from("room").select("*").eq("public", true).then(({ data }) => {
+    await supabase.from("room").select("*").eq("public", true).eq("active", true).then(({ data }) => {
       setLobbyGames((data ?? []).map(r => ({
         userId: r.id,
         roomCode: r.join_code,

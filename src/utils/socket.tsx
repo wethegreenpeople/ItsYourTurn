@@ -70,9 +70,19 @@ export function joinRoom(roomCode: string, onReady?: () => void) {
         // If we already have players (we're the first in the room), we're ready.
         if (gameState.players.length > 0) {
           fireReady();
+          return;
         }
         // Ask if anyone is already in the room.
         channel?.send({ type: "broadcast", event: "request_state", payload: {} });
+        // If no one responds within 2s (e.g. all other players are away),
+        // pull the last saved state from the DB and apply it before firing ready.
+        setTimeout(async () => {
+          if (!readyFired) {
+            const { data } = await supabase.from("room").select("state").eq("join_code", roomCode).single();
+            if (data?.state) applyRemoteState(data.state);
+          }
+          fireReady();
+        }, 2000);
       }
     });
 }
