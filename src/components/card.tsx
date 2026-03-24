@@ -53,12 +53,12 @@ export const CardVisual = (props: {
       <div class="card-inner">
         <img src={`${props.card.image}`} draggable="false" />
         <div
-          class="card-footer absolute bottom-0 left-0 right-0 flex items-center justify-center border-t border-gold/18"
-          style={{ height: "19%", background: "rgba(0, 0, 0, 0.78)" }}
+          class="card-footer absolute bottom-0 left-0 right-0 flex items-center justify-center border-t border-gold/18 overflow-hidden"
+          style={{ padding: "2px 4px", background: "rgba(0, 0, 0, 0.82)" }}
         >
           <span
-            class="font-body text-[clamp(8px,0.9vw,16px)] font-semibold tracking-[0.1em] uppercase"
-            style={{ "font-family": "var(--plugin-font-body, 'Inter', system-ui, sans-serif)", color: "var(--plugin-text-muted, #cfdbd5)" }}
+            class="font-body text-[clamp(13px,9cqw,24px)] font-semibold uppercase leading-tight text-center"
+            style={{ "font-family": "var(--plugin-font-body, 'Inter', system-ui, sans-serif)", color: "var(--plugin-text-muted, #cfdbd5)", "overflow-wrap": "break-word" }}
           >
             {props.card.name}
           </span>

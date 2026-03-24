@@ -169,11 +169,12 @@ function App(props: { isHost?: boolean; onReturnToMenu?: () => void; onQuitGame?
             classList={{
               "flex-col": getPluginSetting("boardLayout", "vertical") !== "horizontal",
               "lg:flex-row": getPluginSetting("boardLayout", "vertical") === "horizontal",
+              "game-boards-wrapper--horizontal": getPluginSetting("boardLayout", "vertical") === "horizontal",
             }}
             style={{
               "--active-rows": gameState.currentTurnPlayerId === currentPlayer()?.id
-                ? "0.65fr 1fr"
-                : "1fr 0.65fr",
+                ? "0.75fr 1fr"
+                : "1fr 0.75fr",
             }}
           >
             <For each={playerBoards()}>

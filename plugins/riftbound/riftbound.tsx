@@ -19,7 +19,7 @@ import { showPreview } from "../../src/stores/cardPreviewStore";
 import { getSelectedIds, clearSelection } from "../../src/stores/selectionStore";
 import { setFaceDown, toggleFaceDown, toggleHorizontal, toggleTapped } from "../../src/stores/cardStateStore";
 import { DeckStack } from "../../src/components/DeckStack";
-import { showZoneLabels } from "../../src/stores/settingsStore";
+import { getPluginSetting, showZoneLabels } from "../../src/stores/settingsStore";
 
 // Renders cards in sortable snap layout
 const SnapCards = (props: { deckId: string; zone: string; horizontal?: boolean }) => (
@@ -220,7 +220,7 @@ export class RiftBound implements Plugin {
       {
         id: `${p}:battlefield`,
         className: zoneTint.battlefield,
-        region: { xStart: 1, xFinish: 11, yStart: 1, yFinish: 4 },
+        region: { xStart: 1, xFinish: getPluginSetting("boardLayout", "vertical") === "vertical" ? 11 : 9, yStart: 1, yFinish: 4 },
         content: () => (
           <DropZone id={`${p}:battlefield`}>
             <ZoneInner label="Battlefield">
@@ -232,7 +232,7 @@ export class RiftBound implements Plugin {
       {
         id: `${p}:legend`,
         className: zoneTint.battlefield,
-        region: { xStart: 11, xFinish: 12, yStart: 1, yFinish: 4 },
+        region: { xStart: getPluginSetting("boardLayout", "vertical") === "vertical" ? 11 : 9, xFinish: getPluginSetting("boardLayout", "vertical") === "vertical" ? 12 : 11, yStart: 1, yFinish: 4 },
         content: () => (
           <DropZone id={`${p}:legend`}>
             <ZoneInner label="Legend">
@@ -244,7 +244,7 @@ export class RiftBound implements Plugin {
       {
         id: `${p}:champion`,
         className: zoneTint.battlefield,
-        region: { xStart: 12, xFinish: 13, yStart: 1, yFinish: 4 },
+        region: { xStart: getPluginSetting("boardLayout", "vertical") === "vertical" ? 12 : 11, xFinish: 13, yStart: 1, yFinish: 4 },
         content: () => (
           <DropZone id={`${p}:champion`}>
             <ZoneInner label="Champion">
