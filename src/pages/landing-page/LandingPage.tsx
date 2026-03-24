@@ -49,13 +49,22 @@ export function LandingPage(props: LandingPageProps) {
     setLobbyGames([]);
   };
 
-  loadSavedGames();
-
   const myGames = createMemo(() => savedGames());
   const myGameCodes = createMemo(() => new Set(savedGames().map(g => g.roomCode)));
   const availableGames = () => lobbyGames().filter(g => g.currentPlayers < g.maxPlayers && !myGameCodes().has(g.roomCode));
 
   onMount(async () => {
+    // Load saved games from local storage, then validate against DB and prune inactive rooms.
+    await loadSavedGames();
+    const codes = savedGames().map(g => g.roomCode);
+    if (codes.length > 0) {
+      const { data: activeRooms } = await supabase.from("room").select("join_code").in("join_code", codes).eq("active", true);
+      const activeCodes = new Set((activeRooms ?? []).map(r => r.join_code));
+      for (const code of codes) {
+        if (!activeCodes.has(code)) await removeSavedGame(code);
+      }
+    }
+
     await supabase.from("room").select("*").eq("public", true).eq("active", true).then(({ data }) => {
       setLobbyGames((data ?? []).map(r => ({
         userId: r.id,
