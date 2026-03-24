@@ -41,7 +41,7 @@ function Root() {
 
     joinRoom(roomCode, async () => {
       setIsHost(true);
-      await supabase.from("room").insert({ allowed_players: maxPlayers, join_code: roomCode, plugin: gameType, public: isPublic, active_players: 1, host_name: playerName });
+      await supabase.from("room").insert({ allowed_players: maxPlayers, join_code: roomCode, plugin: gameType, public: isPublic, active_players: 1, active: true, host_name: playerName });
       setGameStarted(true);
     });
   }
@@ -54,7 +54,7 @@ function Root() {
     joinRoom(roomCode, async () => {
       const { data: roomData } = await supabase.from("room").select("active_players").eq("join_code", roomCode);
       if (roomData && roomData[0]) {
-        await supabase.from("room").update({ active_players: roomData[0].active_players + 1 });
+        await supabase.from("room").update({ active_players: roomData[0].active_players + 1 }).eq("join_code", roomCode);
       }
       setGameStarted(true);
     });
@@ -101,12 +101,24 @@ function Root() {
   }
 
   async function handleQuitGame() {
+    const roomCode = currentRoomCode();
+
     // Remove from saved games — the player has permanently left.
-    await removeSavedGame(currentRoomCode());
+    await removeSavedGame(roomCode);
+
+    // Update DB: decrement active players. If host is quitting, also deactivate the room.
+    if (isHost()) {
+      await supabase.from("room").update({ active: false, active_players: 0 }).eq("join_code", roomCode);
+    } else {
+      const { data: roomData } = await supabase.from("room").select("active_players").eq("join_code", roomCode);
+      if (roomData && roomData[0]) {
+        await supabase.from("room").update({ active_players: Math.max(0, roomData[0].active_players - 1) }).eq("join_code", roomCode);
+      }
+    }
 
     // Tell the room we're permanently leaving.
     broadcastPlayerLeave(myUserId);
-    stopWatchingRoom(currentRoomCode()); // cancel any pending notification for this room
+    stopWatchingRoom(roomCode);
     leaveRoom();
     resetGameState();
 

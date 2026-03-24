@@ -52,7 +52,8 @@ export function LandingPage(props: LandingPageProps) {
   loadSavedGames();
 
   const myGames = createMemo(() => savedGames());
-  const availableGames = () => lobbyGames().filter(g => g.currentPlayers < g.maxPlayers);
+  const myGameCodes = createMemo(() => new Set(savedGames().map(g => g.roomCode)));
+  const availableGames = () => lobbyGames().filter(g => g.currentPlayers < g.maxPlayers && !myGameCodes().has(g.roomCode));
 
   onMount(async () => {
     await supabase.from("room").select("*").eq("public", true).then(({ data }) => {
