@@ -49,6 +49,7 @@ function Root() {
       setIsHost(true);
       await supabase.from("room").insert({ allowed_players: maxPlayers, join_code: roomCode, plugin: gameType, public: isPublic, active_players: 1, active: true, host_name: playerName });
       setGameStarted(true);
+      await saveCurrentGame();
     });
   }
 
@@ -68,6 +69,7 @@ function Root() {
         setCurrentMaxPlayers(roomData[0].allowed_players ?? 2);
       }
       setGameStarted(true);
+      await saveCurrentGame();
     });
     queueMicrotask(() => {
       requestJoin(myUserId, playerName);
