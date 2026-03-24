@@ -3,7 +3,7 @@ import "./stores/index"; // ensure stores are initialized first
 import.meta.glob("../plugins/**/index.ts", { eager: true }); // register all plugins
 import.meta.glob("./stores/index.ts", { eager: true });
 import { render } from "solid-js/web";
-import { createEffect, createSignal, Show } from "solid-js";
+import { createSignal, Show } from "solid-js";
 import App from "./App";
 import { LandingPage } from "./pages/landing-page/LandingPage";
 import { joinRoom, requestJoin, leaveRoom, broadcastPlayerLeave } from "./utils/socket";
@@ -22,6 +22,9 @@ function Root() {
   const [currentPlayerName, setCurrentPlayerName] = createSignal("");
   const [currentMaxPlayers, setCurrentMaxPlayers] = createSignal(2);
   const [isPublicGame, setIsPublicGame] = createSignal(false);
+  const [isConnecting, setIsConnecting] = createSignal(false);
+  const [connectingMessage, setConnectingMessage] = createSignal("");
+  const [connectingCode, setConnectingCode] = createSignal("");
 
   function handleHostGame(
     roomCode: string,
@@ -30,6 +33,9 @@ function Root() {
     gameType: string,
     maxPlayers: number,
   ) {
+    setIsConnecting(true);
+    setConnectingMessage("Creating room");
+    setConnectingCode(roomCode);
     setCurrentRoomCode(roomCode);
     setCurrentGameType(gameType);
     setCurrentPlayerName(playerName);
@@ -47,6 +53,9 @@ function Root() {
   }
 
   function handleJoinGame(roomCode: string, playerName: string) {
+    setIsConnecting(true);
+    setConnectingMessage("Joining room");
+    setConnectingCode(roomCode);
     stopWatchingRoom(roomCode); // stop passive watcher now that we're actively in the room
     setCurrentRoomCode(roomCode);
     setCurrentPlayerName(playerName);
@@ -135,6 +144,9 @@ function Root() {
         <LandingPage
           onHostGame={handleHostGame}
           onJoinGame={handleJoinGame}
+          isConnecting={isConnecting()}
+          connectingMessage={connectingMessage()}
+          connectingCode={connectingCode()}
         />
       }
     >

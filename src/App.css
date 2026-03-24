@@ -427,6 +427,10 @@ body.targeting-mode [data-card-id] .tcg-card {
   50%       { opacity: 0.5; transform: scale(0.8); }
 }
 @keyframes lp-spin { to { transform: rotate(360deg); } }
+@keyframes lp-overlay-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
 @keyframes lp-grid-drift {
   from { transform: translate(0, 0); }
   to   { transform: translate(64px, 64px); }

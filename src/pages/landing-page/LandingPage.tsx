@@ -1,4 +1,4 @@
-import { createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js";
+import { createMemo, createSignal, For, onMount, Show } from "solid-js";
 import { type LobbyEntry } from "../../utils/lobby";
 import { savedGames, loadSavedGames, removeSavedGame } from "../../stores/savedGamesStore";
 import { PlayerSettings } from "../../components/PlayerSettings";
@@ -22,6 +22,9 @@ const plugins: PluginInfo[] = Object.entries(pluginModules).map(([, mod]: [strin
 interface LandingPageProps {
   onHostGame: (roomCode: string, playerName: string, isPublic: boolean, gameType: string, maxPlayers: number) => void;
   onJoinGame: (roomCode: string, playerName: string) => void;
+  isConnecting?: boolean;
+  connectingMessage?: string;
+  connectingCode?: string;
 }
 
 function submitName(name: string): string {
@@ -242,6 +245,22 @@ export function LandingPage(props: LandingPageProps) {
 
       <Show when={showSettings()}>
         <PlayerSettings onClose={() => setShowSettings(false)} />
+      </Show>
+
+      {/* Connecting overlay */}
+      <Show when={props.isConnecting}>
+        <div class="fixed inset-0 z-50 flex flex-col items-center justify-center" style="background:rgba(24,24,27,.92);backdrop-filter:blur(10px);animation:lp-overlay-fade .25s ease both">
+          <div style="width:52px;height:52px;border:1.5px solid rgba(245,203,92,.18);border-top-color:#f5cb5c;border-radius:50%;animation:lp-spin 1s linear infinite" />
+          <p class="font-cinzel text-[.75rem] tracking-[.3em] uppercase mt-7 mb-0 text-text/50 m-0">{props.connectingMessage ?? "Connecting"}</p>
+          <Show when={props.connectingCode}>
+            <p class="font-cinzel font-bold tracking-[.35em] mt-2 mb-0 m-0" style="font-size:2rem;background:linear-gradient(135deg,#f5cb5c 0%,#d4922a 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">{props.connectingCode}</p>
+          </Show>
+          <div class="flex gap-2 mt-6">
+            <For each={[0, 1, 2]}>{(i) => (
+              <div class="w-1.5 h-1.5 rounded-full bg-gold/50" style={`animation:lp-pulse-dot .9s ease-in-out ${i * 0.22}s infinite`} />
+            )}</For>
+          </div>
+        </div>
       </Show>
     </div>
   );
