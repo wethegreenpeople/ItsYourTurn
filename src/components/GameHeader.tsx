@@ -13,6 +13,7 @@ import { cardsInDeck } from "../stores/deckStore";
 import { openDeckSearch } from "../stores/deckContextMenuStore";
 import { MessagingPanel } from "./MessagingPanel";
 import { LeaveSection } from "./LeaveSection";
+import type { GameBarAction } from "../../plugins/base/plugin";
 
 // ── Shared gamebar button classes ──
 const iconBtn = "flex items-center justify-center flex-shrink-0 rounded cursor-pointer transition-colors duration-150";
@@ -75,6 +76,7 @@ const PlayerPanel = (props: { player: Player }) => {
 export const GameHeader = (props: {
   onReturnToMenu?: () => void;
   onQuitGame?: () => void;
+  extraActions?: GameBarAction[];
 }) => {
   const isMyTurn = () => gameState.currentTurnPlayerId === myUserId;
   const [menuOpen, setMenuOpen] = createSignal(false);
@@ -175,6 +177,14 @@ export const GameHeader = (props: {
           <EndTurnBtn />
           <LoadDeckModal />
           <SideboardBtn showLabel />
+          <For each={props.extraActions ?? []}>
+            {(action) => (
+              <button class={gbarBtn} onClick={action.action}>
+                <span class={gbarIcon}>{action.icon}</span>
+                <span class={gbarLabel}>{action.label}</span>
+              </button>
+            )}
+          </For>
           <MsgToggleBtn showLabel />
           <SettingsBtn showLabel />
           <Show when={props.onReturnToMenu || props.onQuitGame}>
@@ -192,6 +202,14 @@ export const GameHeader = (props: {
         >
           <LoadDeckModal onClose={closeMenu} />
           <SideboardBtn onClick={() => { openDeckSearch(`${myUserId}:sideboard`, "Sideboard"); closeMenu(); }} showLabel />
+          <For each={props.extraActions ?? []}>
+            {(action) => (
+              <button class={gbarBtn} onClick={() => { action.action(); closeMenu(); }}>
+                <span class={gbarIcon}>{action.icon}</span>
+                <span class={gbarLabel}>{action.label}</span>
+              </button>
+            )}
+          </For>
           <SettingsBtn onClick={() => { setShowSettingsModal(true); closeMenu(); }} showLabel />
           <Show when={props.onReturnToMenu}>
             <button

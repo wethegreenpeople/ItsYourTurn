@@ -1,4 +1,4 @@
-import { Plugin, PlayArea, CardAction } from "../base/plugin";
+import { Plugin, PlayArea, CardAction, GameBarAction } from "../base/plugin";
 import type { PluginTheme } from "../base/plugin";
 import { DropZone } from "../../src/App";
 import { For, Show } from "solid-js";
@@ -13,21 +13,29 @@ import { loadRiftboundDeck } from "./deckLoader";
 import { showDeckContextMenu } from "../../src/stores/deckContextMenuStore";
 import { getDropPointer } from "../../src/stores/freePlaceStore";
 import { startTargeting, stopTargeting } from "../../src/stores/targetingStore";
+import { startAttaching, getAttachments, getParent, detachCard, detachAll } from "../../src/stores/attachmentStore";
+import { addCounter, resetCounters, getBuffs, clearBuffs } from "../../src/stores/counterStore";
+import { openAddBuff } from "../../src/stores/addBuffStore";
 import { findDeckForCard } from "../../src/stores/deckStore";
 import { showPreview } from "../../src/stores/cardPreviewStore";
 import { getSelectedIds, clearSelection } from "../../src/stores/selectionStore";
 import { setFaceDown, toggleFaceDown, toggleHorizontal, toggleTapped } from "../../src/stores/cardStateStore";
 import { DeckStack } from "../../src/components/DeckStack";
 import { getPluginSetting, showZoneLabels } from "../../src/stores/settingsStore";
+import { openGlobalSearch } from "./globalCardSearchStore";
+import { GlobalCardSearchModal } from "./GlobalCardSearchModal";
 
-// Renders cards in sortable snap layout
-const SnapCards = (props: { deckId: string; zone: string; horizontal?: boolean }) => (
-  <SortableProvider ids={cardsInDeck(props.deckId).map(c => c.id)}>
-    <For each={cardsInDeck(props.deckId)}>
-      {(card) => <CardComponent card={card} zoneId={props.zone} horizontal={props.horizontal} />}
-    </For>
-  </SortableProvider>
-);
+// Renders cards in sortable snap layout, skipping cards attached to a parent
+const SnapCards = (props: { deckId: string; zone: string; horizontal?: boolean }) => {
+  const freeCards = () => cardsInDeck(props.deckId).filter(c => !getParent(c.id));
+  return (
+    <SortableProvider ids={freeCards().map(c => c.id)}>
+      <For each={freeCards()}>
+        {(card) => <CardComponent card={card} zoneId={props.zone} horizontal={props.horizontal} />}
+      </For>
+    </SortableProvider>
+  );
+};
 
 // Zone tint classes — Tailwind instead of CSS
 const zoneTint = {
@@ -56,7 +64,7 @@ const ZoneInner = (props: { label: string; children: any }) => (
 const ZoneCards = (props: { deckId: string; zone: string; horizontal?: boolean }) => (
   <div
     class="zone-cards flex flex-wrap gap-1 content-start items-start flex-1 min-h-0 p-[2px_4px_4px] overflow-y-auto overflow-x-hidden"
-    classList={{ "zone-cards--empty": cardsInDeck(props.deckId).length === 0 }}
+    classList={{ "zone-cards--empty": cardsInDeck(props.deckId).filter(c => !getParent(c.id)).length === 0 }}
   >
     <SnapCards deckId={props.deckId} zone={props.zone} horizontal={props.horizontal} />
   </div>
@@ -101,6 +109,36 @@ export class RiftBound implements Plugin {
       action: (id) => stopTargeting(id)
     },
     {
+      label: "Attach to...",
+      action: (id) => startAttaching(id),
+    },
+    {
+      label: "Detach",
+      action: (id) => detachCard(id),
+      show: (id) => !!getParent(id),
+    },
+    {
+      label: "Detach Attachments",
+      action: (id) => detachAll(id),
+      show: (id) => getAttachments(id).length > 0,
+    },
+    {
+      label: "Add",
+      submenu: [
+        { label: "Counter +1",      action: (id) => addCounter(id, 1) },
+        { label: "Counter +5",      action: (id) => addCounter(id, 5) },
+        { label: "Counter −1",      action: (id) => addCounter(id, -1) },
+        { label: "Counter −5",      action: (id) => addCounter(id, -5) },
+        { label: "Reset Counters",  action: (id) => resetCounters(id) },
+        { label: "Buff…",           action: (id) => openAddBuff(id) },
+      ],
+    },
+    {
+      label: "Clear Buffs",
+      action: (id) => clearBuffs(id),
+      show: (id) => getBuffs(id).length > 0,
+    },
+    {
       label: "Tap / Untap",
       action: (id) => toggleTapped(id),
     },
@@ -132,10 +170,6 @@ export class RiftBound implements Plugin {
       action: (id, zoneId) => moveCard(id, `${zoneId.split(':')[0]}:mainDeck`),
     },
     {
-      label: "Play as Rune",
-      action: (id, zoneId) => moveCard(id, `${zoneId.split(':')[0]}:PlayedRunes`),
-    },
-    {
       label: "Return to Rune Deck",
       action: (id, zoneId) => moveCard(id, `${zoneId.split(':')[0]}:UnplayedRunes`),
     },
@@ -148,6 +182,16 @@ export class RiftBound implements Plugin {
       action: (id, zoneId) => moveCard(id, `${zoneId.split(':')[0]}:trash`),
     },
   ];
+
+  gameBarActions: GameBarAction[] = [
+    {
+      label: "Card Search",
+      icon: "⊕",
+      action: openGlobalSearch,
+    },
+  ];
+
+  renderOverlays = () => <GlobalCardSearchModal />;
 
   theme: PluginTheme = {
     accentColor: "#c9a84c",
@@ -304,16 +348,6 @@ export class RiftBound implements Plugin {
     const cardId = draggable.id as string;
     const { x: px, y: py } = getDropPointer();
 
-    // solid-dnd caches droppable rects at drag-start, so zones that were
-    // hidden (display:none) when the drag began — e.g. the opponent's board on
-    // mobile — are never detected even after the board switches mid-drag.
-    // Strategy:
-    // 1. Hit-test with elementsFromPoint + .closest("[data-zone]") traversal so
-    //    we find the zone even when the pointer is over a nested child element.
-    // 2. If that yields no zone, or the zone belongs to the wrong player,
-    //    scan every zone panel of the currently-viewed player by bounding rect.
-    //    This handles the case where the pointer is still at the screen edge
-    //    (where the board-switch triggered) rather than over a specific zone.
     let hitZoneId: string | undefined;
     for (const el of document.elementsFromPoint(px, py)) {
       const panel = (el as HTMLElement).closest?.("[data-zone]") as HTMLElement | null;
@@ -322,12 +356,10 @@ export class RiftBound implements Plugin {
 
     const viewedPlayer = viewingPlayerId();
     if (!hitZoneId || hitZoneId.split(":")[0] !== viewedPlayer) {
-      // Rect-scan fallback: find whichever visible zone of the viewed player
-      // contains the pointer.
       const panels = document.querySelectorAll(`[data-zone^="${viewedPlayer}:"]`);
       for (const panel of Array.from(panels)) {
         const rect = (panel as HTMLElement).getBoundingClientRect();
-        if (rect.width === 0 && rect.height === 0) continue; // hidden
+        if (rect.width === 0 && rect.height === 0) continue;
         if (px >= rect.left && px <= rect.right && py >= rect.top && py <= rect.bottom) {
           hitZoneId = (panel as HTMLElement).dataset.zone;
           break;
@@ -343,7 +375,11 @@ export class RiftBound implements Plugin {
     // Multi-select: move all selected cards to the target zone
     const selected = getSelectedIds();
     if (selected.size > 1 && selected.has(cardId)) {
-      selected.forEach(id => moveCard(id, targetId));
+      selected.forEach(id => {
+        moveCard(id, targetId);
+        // Move attachments along with each selected card
+        getAttachments(id).forEach(attachedId => moveCard(attachedId, targetId));
+      });
       clearSelection();
       return;
     }
@@ -353,9 +389,8 @@ export class RiftBound implements Plugin {
     } else {
       moveCard(cardId, targetId);
     }
-  };
 
-  // Lifecycle hooks — RiftBound uses these as extension points.
-  // onGameStart, onTurnStart, onTurnEnd, onCardMoved are all optional.
-  // Add game-specific reactions here (e.g., auto-draw on turn start).
+    // Move all attachments to the same zone as the parent
+    getAttachments(cardId).forEach(attachedId => moveCard(attachedId, targetId));
+  };
 }

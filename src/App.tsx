@@ -18,9 +18,12 @@ import { GameHeader } from "./components/GameHeader";
 import { CardContextMenu } from "./components/CardContextMenu";
 import { DeckContextMenu } from "./components/DeckContextMenu";
 import { DeckSearchModal } from "./components/DeckSearchModal";
+import { PeekModal } from "./components/PeekModal";
+import { AddBuffModal } from "./components/AddBuffModal";
 import { previewState, hidePreview } from "./stores/cardPreviewStore";
 import { ArrowOverlay } from "./components/ArrowOverlay";
 import { pendingSource, cancelTargeting } from "./stores/targetingStore";
+import { pendingAttachSource, cancelAttaching } from "./stores/attachmentStore";
 import { SelectionBox } from "./components/SelectionBox";
 import { isHorizontal } from "./stores/cardStateStore";
 import { DragBoardSwitcher } from "./components/DragBoardSwitcher";
@@ -123,14 +126,37 @@ function App(props: { pluginId?: string; isHost?: boolean; onReturnToMenu?: () =
     });
   });
 
+  // Attaching mode: crosshair cursor, Escape or click-away to cancel
+  createEffect(() => {
+    document.body.classList.toggle("attaching-mode", !!pendingAttachSource());
+  });
+  createEffect(() => {
+    if (!pendingAttachSource()) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") cancelAttaching(); };
+    const onDocClick = (e: MouseEvent) => {
+      const t = e.target as Element;
+      if (t.closest("[data-card-id]") || t.closest("[data-player-id]")) return;
+      cancelAttaching();
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("click", onDocClick, { capture: true });
+    onCleanup(() => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("click", onDocClick, { capture: true });
+    });
+  });
+
   return (
     <DragDropProvider onDragEnd={plugin.onDragEnd}>
       <DragDropSensors />
       <CardContextMenu actions={allCardActions()} />
       <DeckContextMenu />
       <DeckSearchModal />
+      <PeekModal />
+      <AddBuffModal />
       <DragBoardSwitcher />
       <SettingsModal />
+      {plugin.renderOverlays?.()}
       <main
         class="flex flex-col h-dvh lg:flex-row"
         style={{
@@ -138,7 +164,7 @@ function App(props: { pluginId?: string; isHost?: boolean; onReturnToMenu?: () =
           background: "radial-gradient(ellipse 100% 55% at 50% 0%, rgba(40, 40, 48, 0.25) 0%, transparent 70%), linear-gradient(180deg, #1c1c1f 0%, #111113 100%)",
         }}
       >
-        <GameHeader onReturnToMenu={props.onReturnToMenu} onQuitGame={props.onQuitGame} />
+        <GameHeader onReturnToMenu={props.onReturnToMenu} onQuitGame={props.onQuitGame} extraActions={plugin.gameBarActions} />
         <div class="flex flex-col flex-1 min-h-0 min-w-0">
 
           {/* Board switcher — mobile only, hidden on desktop via lg:hidden */}

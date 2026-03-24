@@ -26,9 +26,19 @@ export interface PluginTheme {
   gridRowsTemplate?: string;
 }
 
-export interface CardAction {
+export interface CardSubAction {
   label: string;
   action: (cardId: string, zoneId: string) => void;
+}
+
+export interface CardAction {
+  label: string;
+  /** Called when this action has no submenu. Required if submenu is absent. */
+  action?: (cardId: string, zoneId: string) => void;
+  /** If provided, this action is only shown in the context menu when this returns true. */
+  show?: (cardId: string) => boolean;
+  /** If provided, clicking this item expands an inline submenu instead of executing action. */
+  submenu?: CardSubAction[];
 }
 
 export interface PluginSetting {
@@ -38,6 +48,13 @@ export interface PluginSetting {
   type: 'toggle' | 'select';
   options?: { value: string; label: string }[];
   defaultValue: boolean | string;
+}
+
+/** A button that appears in the game sidebar / hamburger menu. */
+export interface GameBarAction {
+  label: string;
+  icon: string;
+  action: () => void;
 }
 
 export interface Plugin {
@@ -52,6 +69,13 @@ export interface Plugin {
   cardActions?: CardAction[];
   /** Settings this plugin exposes in the Settings panel. */
   settings?: PluginSetting[];
+  /** Extra buttons added to the game bar sidebar and mobile hamburger menu. */
+  gameBarActions?: GameBarAction[];
+  /**
+   * Optional extra overlays/modals rendered by the plugin (e.g. card search modal).
+   * Called inside the DragDropProvider in App.tsx.
+   */
+  renderOverlays?: () => JSX.Element;
 
   /**
    * Called once to register the plugin itself. Should only call registerPlugin(this).

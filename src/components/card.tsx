@@ -1,10 +1,12 @@
 import { createSortable } from "@thisbeyond/solid-dnd";
-import { Show } from "solid-js";
+import { For, Show } from "solid-js";
 import { Card } from "../models/Card";
 import { showContextMenu } from "../stores/contextMenuStore";
 import { pendingSource, completeTarget, arrows } from "../stores/targetingStore";
+import { pendingAttachSource, completeAttach, getAttachments } from "../stores/attachmentStore";
 import { isSelected, isSelectMode, getSelectedIds, clearSelection, toggleSelected } from "../stores/selectionStore";
 import { isFaceDown, isHorizontal, isTapped, toggleTapped } from "../stores/cardStateStore";
+import { getCounter, getBuffs } from "../stores/counterStore";
 import { findDeckForCard } from "../stores/deckStore";
 import { gameState } from "../stores/gameStore";
 
@@ -68,6 +70,34 @@ export const CardVisual = (props: {
   );
 };
 
+// Peeking strip shown below a parent card for each attachment
+const AttachmentLabel = (props: { cardId: string }) => {
+  const card = () => findDeckForCard(props.cardId)?.cards.find(c => c.id === props.cardId);
+  const palette = () => {
+    const c = card();
+    return c ? PALETTES[hashName(c.name) % PALETTES.length] : PALETTES[0];
+  };
+  return (
+    <div
+      class="flex items-center gap-1 px-1.5 overflow-hidden border-x border-b rounded-b"
+      style={{
+        background: `linear-gradient(135deg, ${palette().top} 0%, ${palette().bot} 100%)`,
+        "border-color": "rgba(245,203,92,0.2)",
+        height: "18px",
+        "margin-top": "-1px",
+      }}
+    >
+      <span class="text-[8px] font-bold leading-none" style={{ color: "rgba(245,203,92,0.85)" }}>⊕</span>
+      <span
+        class="text-[8px] font-semibold leading-none truncate"
+        style={{ color: "var(--plugin-text-muted, #cfdbd5)" }}
+      >
+        {card()?.name ?? "?"}
+      </span>
+    </div>
+  );
+};
+
 // Returns the player name that this card is sending an arrow TO across board boundaries, or null.
 function crossPlayerOutgoing(cardId: string): string | null {
   const outgoing = arrows().find(a => a.sourceId === cardId);
@@ -95,6 +125,7 @@ export const CardComponent = (props: { card: Card; zoneId: string; horizontal?: 
   const effectiveHorizontal = () => !!props.horizontal || isHorizontal(props.card.id);
   const outgoing = () => crossPlayerOutgoing(props.card.id);
   const incoming = () => crossPlayerIncoming(props.card.id);
+  const attachmentIds = () => getAttachments(props.card.id);
 
   let pressTimer: ReturnType<typeof setTimeout> | null = null;
   let startX = 0, startY = 0;
@@ -103,7 +134,7 @@ export const CardComponent = (props: { card: Card; zoneId: string; horizontal?: 
   let suppressNextClick = false;
 
   const onPointerDown = (e: PointerEvent) => {
-    if (pendingSource()) return;
+    if (pendingSource() || pendingAttachSource()) return;
     startX = e.clientX;
     startY = e.clientY;
     pressTimer = setTimeout(() => {
@@ -126,7 +157,7 @@ export const CardComponent = (props: { card: Card; zoneId: string; horizontal?: 
 
   const onPointerUp = (e: PointerEvent) => {
     cancelPress();
-    if (pendingSource()) return;
+    if (pendingSource() || pendingAttachSource()) return;
     const now = Date.now();
     const dx = Math.abs(e.clientX - lastTapX);
     const dy = Math.abs(e.clientY - lastTapY);
@@ -153,6 +184,14 @@ export const CardComponent = (props: { card: Card; zoneId: string; horizontal?: 
       onDragStart={(e) => e.preventDefault()}
       onClick={(e) => {
         if (suppressNextClick) { suppressNextClick = false; return; }
+
+        // Attaching mode: clicking this card completes the attachment
+        if (pendingAttachSource()) {
+          e.stopPropagation();
+          completeAttach(props.card.id);
+          return;
+        }
+
         if (pendingSource()) { e.stopPropagation(); completeTarget(props.card.id); return; }
 
         // In select mode: tap toggles this card in/out of the selection
@@ -174,14 +213,49 @@ export const CardComponent = (props: { card: Card; zoneId: string; horizontal?: 
         showContextMenu(e.clientX, e.clientY, props.card.id, props.zoneId);
       }}
     >
-      <CardVisual
-        card={props.card}
-        tapped={isTapped(props.card.id)}
-        dragging={sortable.isActiveDraggable}
-        selected={isSelected(props.card.id)}
-        faceDown={isFaceDown(props.card.id)}
-        horizontal={effectiveHorizontal()}
-      />
+      <div class="relative inline-block">
+        <CardVisual
+          card={props.card}
+          tapped={isTapped(props.card.id)}
+          dragging={sortable.isActiveDraggable}
+          selected={isSelected(props.card.id)}
+          faceDown={isFaceDown(props.card.id)}
+          horizontal={effectiveHorizontal()}
+        />
+        {/* Counter badge — top-right corner, gold for positive / red for negative */}
+        <Show when={getCounter(props.card.id) !== 0}>
+          <div
+            class="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-1 z-10 shadow-md leading-none text-[9px] font-bold pointer-events-none"
+            style={{
+              background: getCounter(props.card.id) > 0 ? "rgba(245,203,92,0.92)" : "rgba(210,60,60,0.92)",
+              color: getCounter(props.card.id) > 0 ? "#1a1100" : "#fff",
+            }}
+          >
+            {getCounter(props.card.id) > 0 ? `+${getCounter(props.card.id)}` : getCounter(props.card.id)}
+          </div>
+        </Show>
+        {/* Buff badges — stacked top-left, teal pills */}
+        <Show when={getBuffs(props.card.id).length > 0}>
+          <div class="absolute top-0.5 left-0.5 flex flex-col gap-[2px] z-10 pointer-events-none max-w-[60%]">
+            <For each={getBuffs(props.card.id)}>
+              {(buff) => (
+                <div
+                  class="rounded-sm px-[3px] py-[1px] text-[7px] font-bold leading-none shadow-sm truncate"
+                  style={{ background: "rgba(50,190,160,0.90)", color: "#051a14" }}
+                >
+                  {buff}
+                </div>
+              )}
+            </For>
+          </div>
+        </Show>
+      </div>
+
+      {/* Attachment labels — peeking strips below the card */}
+      <For each={attachmentIds()}>
+        {(attachedId) => <AttachmentLabel cardId={attachedId} />}
+      </For>
+
       <Show when={outgoing()}>
         <div class="absolute bottom-[3px] left-1/2 -translate-x-1/2 text-[8px] font-bold tracking-[0.02em] whitespace-nowrap px-[5px] py-px rounded-[3px] pointer-events-none z-10 leading-[14px] bg-gold/92 text-[#1a1100] shadow-[0_1px_4px_rgba(0,0,0,0.5)]">→ {outgoing()}</div>
       </Show>

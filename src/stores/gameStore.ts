@@ -23,6 +23,11 @@ export interface Arrow {
   targetId: string;
 }
 
+export interface Attachment {
+  childId: string;
+  parentId: string;
+}
+
 export interface CardPosition {
   x: number;
   y: number;
@@ -34,6 +39,9 @@ export interface GameState {
   cardStates: Record<string, CardState>;
   arrows: Arrow[];
   cardPositions: Record<string, CardPosition>;
+  attachments: Attachment[];
+  cardCounters: Record<string, number>;
+  cardBuffs: Record<string, string[]>;
   currentTurnPlayerId: string;
   scoreLabel: string;
   playerStartingScore: number;
@@ -54,6 +62,9 @@ const [gameState, setGameState] = createStore<GameState>({
   cardStates: {},
   arrows: [],
   cardPositions: {},
+  attachments: [],
+  cardCounters: {},
+  cardBuffs: {},
   currentTurnPlayerId: "",
   scoreLabel: "HP",
   showMessaging: false,
@@ -121,6 +132,9 @@ export function resetGameState() {
     cardStates: {},
     arrows: [],
     cardPositions: {},
+    attachments: [],
+    cardCounters: {},
+    cardBuffs: {},
     currentTurnPlayerId: "",
     scoreLabel: "HP",
     showMessaging: false,

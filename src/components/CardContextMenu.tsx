@@ -1,10 +1,12 @@
-import { Show, For, onMount, onCleanup } from "solid-js";
+import { Show, For, onMount, onCleanup, createSignal } from "solid-js";
 import { Portal } from "solid-js/web";
 import { contextMenu, hideContextMenu } from "../stores/contextMenuStore";
 import { getSelectedIds, enterSelectMode, toggleSelected } from "../stores/selectionStore";
 import type { CardAction } from "../../plugins/base/plugin";
 
 export const CardContextMenu = (props: { actions: CardAction[] }) => {
+  const [expanded, setExpanded] = createSignal<string | null>(null);
+
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === "Escape") hideContextMenu();
   };
@@ -19,9 +21,13 @@ export const CardContextMenu = (props: { actions: CardAction[] }) => {
       : [contextMenu.cardId];
   }
 
+  const visibleActions = () => props.actions.filter(a => !a.show || a.show(contextMenu.cardId));
   const isMulti = () => targets().length > 1;
   const menuX = () => Math.min(contextMenu.x, window.innerWidth - 180);
-  const menuY = () => Math.min(contextMenu.y, window.innerHeight - props.actions.length * 36 - 16);
+  const menuY = () => Math.min(contextMenu.y, window.innerHeight - visibleActions().length * 36 - 16);
+
+  const btnClass = "flex items-center w-full py-[7px] px-2.5 bg-transparent border-none rounded text-text font-body text-[clamp(11px,0.9vw,13px)] font-medium tracking-[0.04em] text-left cursor-pointer transition-[background,color] duration-100 whitespace-nowrap hover:bg-gold/12 hover:text-gold active:bg-gold/20";
+  const subBtnClass = "flex items-center w-full py-[6px] px-2.5 bg-transparent border-none rounded text-text-muted font-body text-[clamp(10px,0.85vw,12px)] font-medium tracking-[0.04em] text-left cursor-pointer transition-[background,color] duration-100 whitespace-nowrap hover:bg-gold/10 hover:text-gold active:bg-gold/18";
 
   return (
     <Show when={contextMenu.visible}>
@@ -59,18 +65,47 @@ export const CardContextMenu = (props: { actions: CardAction[] }) => {
               {targets().length} cards selected
             </div>
           </Show>
-          <For each={props.actions}>
+          <For each={visibleActions()}>
             {(action) => (
-              <button
-                class="flex items-center w-full py-[7px] px-2.5 bg-transparent border-none rounded text-text font-body text-[clamp(11px,0.9vw,13px)] font-medium tracking-[0.04em] text-left cursor-pointer transition-[background,color] duration-100 whitespace-nowrap hover:bg-gold/12 hover:text-gold active:bg-gold/20"
-                onClick={() => {
-                  const ids = targets();
-                  ids.forEach(id => action.action(id, contextMenu.zoneId));
-                  hideContextMenu();
-                }}
-              >
-                {action.label}
-              </button>
+              <>
+                <button
+                  class={btnClass}
+                  onClick={() => {
+                    if (action.submenu) {
+                      setExpanded(v => v === action.label ? null : action.label);
+                    } else if (action.action) {
+                      const ids = targets();
+                      ids.forEach(id => action.action!(id, contextMenu.zoneId));
+                      hideContextMenu();
+                    }
+                  }}
+                >
+                  <span class="flex-1">{action.label}</span>
+                  <Show when={action.submenu}>
+                    <span class="text-[10px] opacity-60 ml-1">
+                      {expanded() === action.label ? "▾" : "▸"}
+                    </span>
+                  </Show>
+                </button>
+                <Show when={action.submenu && expanded() === action.label}>
+                  <div class="flex flex-col gap-px pl-2 pb-0.5 border-b border-gold/8">
+                    <For each={action.submenu!}>
+                      {(sub) => (
+                        <button
+                          class={subBtnClass}
+                          onClick={() => {
+                            const ids = targets();
+                            ids.forEach(id => sub.action(id, contextMenu.zoneId));
+                            hideContextMenu();
+                          }}
+                        >
+                          {sub.label}
+                        </button>
+                      )}
+                    </For>
+                  </div>
+                </Show>
+              </>
             )}
           </For>
         </div>

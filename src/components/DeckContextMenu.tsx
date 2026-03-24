@@ -1,4 +1,4 @@
-import { Show, onMount, onCleanup } from "solid-js";
+import { Show, For, createSignal, onMount, onCleanup } from "solid-js";
 import { Portal } from "solid-js/web";
 import {
   deckContextMenu,
@@ -6,10 +6,15 @@ import {
   openDeckSearch,
 } from "../stores/deckContextMenuStore";
 import { shuffleDeck, moveTopCard } from "../stores/deckStore";
+import { openPeek } from "../stores/peekStore";
 
 const menuItemClass = "flex items-center w-full py-[7px] px-2.5 bg-transparent border-none rounded text-text font-body text-[clamp(11px,0.9vw,13px)] font-medium tracking-[0.04em] text-left cursor-pointer transition-[background,color] duration-100 whitespace-nowrap hover:bg-gold/12 hover:text-gold active:bg-gold/20";
 
+const PEEK_COUNTS = [1, 2, 3, 5, 7];
+
 export const DeckContextMenu = () => {
+  const [peekExpanded, setPeekExpanded] = createSignal(false);
+
   const onKeyDown = (e: KeyboardEvent) => {
     if (e.key === "Escape") hideDeckContextMenu();
   };
@@ -17,7 +22,7 @@ export const DeckContextMenu = () => {
   onCleanup(() => document.removeEventListener("keydown", onKeyDown));
 
   const menuX = () => Math.min(deckContextMenu.x, window.innerWidth - 180);
-  const menuY = () => Math.min(deckContextMenu.y, window.innerHeight - 3 * 36 - 16);
+  const menuY = () => Math.min(deckContextMenu.y, window.innerHeight - 5 * 36 - 16);
 
   return (
     <Show when={deckContextMenu.visible}>
@@ -54,6 +59,27 @@ export const DeckContextMenu = () => {
             class={menuItemClass}
             onClick={() => { openDeckSearch(deckContextMenu.deckId); hideDeckContextMenu(); }}
           >Search Deck</button>
+          <button
+            class={menuItemClass}
+            onClick={() => setPeekExpanded(v => !v)}
+          >
+            Peek{peekExpanded() ? " ▾" : " ▸"}
+          </button>
+          <Show when={peekExpanded()}>
+            <div class="flex gap-1 pl-3 pb-1 flex-wrap">
+              <For each={PEEK_COUNTS}>
+                {(n) => (
+                  <button
+                    class="px-2 py-1 rounded text-[11px] font-bold text-gold bg-gold/12 border border-gold/25 cursor-pointer hover:bg-gold/20 transition-colors duration-100"
+                    onClick={() => {
+                      openPeek(deckContextMenu.deckId, n);
+                      hideDeckContextMenu();
+                    }}
+                  >{n}</button>
+                )}
+              </For>
+            </div>
+          </Show>
         </div>
       </Portal>
     </Show>

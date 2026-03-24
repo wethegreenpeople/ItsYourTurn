@@ -223,6 +223,13 @@ body.targeting-mode [data-card-id] .tcg-card {
   box-shadow: 0 0 0 2px rgba(255, 80, 30, 0.7), 0 0 12px rgba(255, 80, 30, 0.4);
   transition: box-shadow 0.15s ease;
 }
+
+/* ===================== ATTACHING MODE ===================== */
+body.attaching-mode, body.attaching-mode * { cursor: cell !important; }
+body.attaching-mode [data-card-id] .tcg-card {
+  box-shadow: 0 0 0 2px rgba(80, 200, 120, 0.7), 0 0 12px rgba(80, 200, 120, 0.4);
+  transition: box-shadow 0.15s ease;
+}
 @keyframes arrow-dash {
   from { stroke-dashoffset: 40; }
   to   { stroke-dashoffset: 0; }
