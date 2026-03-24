@@ -68,6 +68,12 @@ function Root() {
         setCurrentGameType(roomData[0].plugin ?? "");
         setCurrentMaxPlayers(roomData[0].allowed_players ?? 2);
       }
+      // If we're not in the player list (e.g. rejoining after a refresh before
+      // state was ever saved to DB), add ourselves so the game isn't empty.
+      if (!gameState.players.some((p) => p.id === myUserId)) {
+        addPlayer(myUserId, playerName);
+        setCurrentPlayer({ id: myUserId, name: playerName, score: gameState.playerStartingScore });
+      }
       setGameStarted(true);
       await saveCurrentGame();
     });

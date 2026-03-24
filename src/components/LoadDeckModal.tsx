@@ -1,4 +1,5 @@
 import { createSignal, onCleanup, Show } from "solid-js";
+import { Portal } from "solid-js/web";
 import { myUserId } from "../stores/gameStore";
 import { getActivePlugin } from "../stores/pluginStore";
 import { Button } from "./ui";
@@ -66,6 +67,7 @@ export const LoadDeckModal = (props: { onClose?: () => void } = {}) => {
       </button>
 
       <Show when={open()}>
+        <Portal>
         <div
           class="fixed inset-0 z-[20000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-[modal-fade-in_.15s_ease]"
           onClick={closeModal}
@@ -108,6 +110,7 @@ export const LoadDeckModal = (props: { onClose?: () => void } = {}) => {
             </div>
           </div>
         </div>
+        </Portal>
       </Show>
     </>
   );
