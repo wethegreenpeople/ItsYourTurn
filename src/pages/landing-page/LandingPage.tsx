@@ -6,6 +6,8 @@ import { HostModal } from "../../components/HostModal";
 import { JoinModal } from "../../components/JoinModal";
 import { LobbyHeader } from "./components/LobbyHeader";
 import { SavedGamesList } from "./components/SavedGames";
+import { LobbyList } from "./components/LobbyList";
+
 
 const pluginModules = import.meta.glob("../../plugins/**/info.json", { eager: true });
 
@@ -66,63 +68,6 @@ export function LandingPage(props: LandingPageProps) {
     el.style.boxShadow = "";
   };
 
-  const LobbyList = () => (
-    <div class="flex flex-col gap-2.5">
-      <Show
-        when={availableGames().length > 0}
-        fallback={
-          <div class="flex flex-col items-center gap-3 py-10 rounded-xl bg-surface/70 border border-dashed border-rim/50">
-            <span class="text-[2rem] opacity-20">🏟</span>
-            <p class="text-[.82rem] m-0 text-text-muted/30">No public games right now</p>
-            <p class="text-[.72rem] m-0 text-text-muted/20">Host one to get started!</p>
-          </div>
-        }
-      >
-        <For each={availableGames()}>
-          {(game) => (
-            <div class="flex items-center gap-3.5 px-4 py-3.5 rounded-[10px] bg-surface/90 border border-rim/60
-                        transition-[border-color] duration-150 hover:border-text-muted/30">
-              <div class="w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center text-[1.1rem]
-                          bg-white/4 border border-rim/50">⚔</div>
-              <div class="flex flex-col gap-1 flex-1 min-w-0">
-                <span class="font-cinzel font-semibold text-sm text-text tracking-wide">{game.gameType}</span>
-                <div class="flex items-center gap-2 flex-wrap">
-                  <span class="text-[.72rem] text-text-muted/40">
-                    Hosted by <span class="text-text-muted/65">{game.hostName}</span>
-                  </span>
-                  <span class="text-rim/80 text-[.55rem]">•</span>
-                  <span class="text-[.7rem] font-cinzel font-bold tracking-wider text-gold/60">{game.roomCode}</span>
-                </div>
-              </div>
-              <div class="flex flex-col items-end gap-2">
-                <div class="flex gap-1 items-center flex-shrink-0">
-                  <For each={Array.from({ length: game.maxPlayers }, (_, i) => i)}>
-                    {(i) => (
-                      <div
-                        class="w-2 h-2 rounded-full transition-[background,box-shadow] duration-200"
-                        classList={{
-                          "bg-gold shadow-[0_0_5px_rgba(245,203,92,.4)]": i < game.currentPlayers,
-                          "bg-rim/70": i >= game.currentPlayers,
-                        }}
-                      />
-                    )}
-                  </For>
-                </div>
-                <span class="text-[.65rem] text-text-muted/30">{game.currentPlayers}/{game.maxPlayers}</span>
-              </div>
-              <button
-                class="px-3.5 py-1.5 rounded-[7px] border border-gold/40 bg-gold/10 text-gold
-                       font-cinzel text-[.72rem] font-semibold tracking-wider cursor-pointer whitespace-nowrap flex-shrink-0
-                       transition-colors duration-150 hover:bg-gold/18 hover:border-gold/65 hover:shadow-[0_2px_12px_rgba(245,203,92,.12)]"
-                onClick={() => { closeLobby(); props.onJoinGame(game.roomCode, playerName().trim() || "Player"); }}
-              >Join</button>
-            </div>
-          )}
-        </For>
-      </Show>
-    </div>
-  );
-
   const GoldCta = (p: { onClick: () => void; children: any }) => (
     <button onClick={p.onClick}
       class="px-5 py-2.5 rounded-[9px] font-cinzel font-bold text-[.78rem] tracking-[.1em] uppercase cursor-pointer border-none flex-shrink-0"
@@ -160,7 +105,7 @@ export function LandingPage(props: LandingPageProps) {
              style="padding-top:env(safe-area-inset-top,0);padding-bottom:env(safe-area-inset-bottom,0)">
           <LobbyHeader />
           <div class="flex-1 overflow-y-auto px-6 py-5" style="scrollbar-width:thin;scrollbar-color:rgba(82,82,91,.5) transparent">
-            <LobbyList />
+            <LobbyList availableGames={availableGames()} closeLobby={closeLobby} joinGame={props.onJoinGame} playerName={playerName()} />
             <Show when={myGames().length > 0}>
               <div class="mt-6">
                 <p class="text-[.65rem] font-semibold tracking-[.35em] uppercase mb-3 m-0 text-text-muted/40">My Games</p>
@@ -257,7 +202,7 @@ export function LandingPage(props: LandingPageProps) {
             <LobbyHeader />
             <div class="flex-1 overflow-y-auto px-8 py-6" style="scrollbar-width:thin;scrollbar-color:rgba(82,82,91,.4) transparent">
               <p class="text-[.65rem] font-semibold tracking-[.35em] uppercase mb-3 m-0 text-text-muted/40">Available Games</p>
-              <LobbyList />
+              <LobbyList availableGames={availableGames()} closeLobby={closeLobby} joinGame={props.onJoinGame} playerName={playerName()} />
               <Show when={myGames().length > 0}>
                 <div class="mt-8">
                   <p class="text-[.65rem] font-semibold tracking-[.35em] uppercase mb-3 m-0 text-text-muted/40">My Games</p>
