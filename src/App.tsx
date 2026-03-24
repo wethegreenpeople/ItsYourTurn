@@ -44,7 +44,7 @@ function App(props: { isHost?: boolean; onReturnToMenu?: () => void; onQuitGame?
   const plugin: Plugin = Plugins.filter(s => s.id === "riftbound")[0];
 
   // Set active plugin so lifecycle hooks work from deckStore/gameStore
-  setActivePlugin(plugin);
+  if (plugin) setActivePlugin(plugin);
 
   // Track registered players so registerPlayer/createPlayerAreas only run once per player.
   const registeredPlayers = new Map<string, { playerId: string; areas: ReturnType<Plugin["createPlayerAreas"]> }>();

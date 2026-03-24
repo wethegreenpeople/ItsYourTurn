@@ -139,6 +139,7 @@ function Root() {
       }
     >
       <App
+        key={currentRoomCode()}
         isHost={isHost()}
         onReturnToMenu={handleReturnToMenu}
         onQuitGame={handleQuitGame}
