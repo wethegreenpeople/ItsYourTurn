@@ -35,9 +35,12 @@ export async function storageGet<T>(key: string): Promise<T | null> {
 }
 
 export async function storageSet(key: string, value: unknown): Promise<void> {
-  const store = await getStore();
-  if (store) { await store.set(key, value); return; }
+  // Always write to localStorage as a synchronous cache so module-level
+  // reads (e.g. savedGamesStore seed) see fresh data on the next cold start,
+  // even in Tauri builds where the primary store is the plugin file store.
   localStorage.setItem(NS + key, JSON.stringify(value));
+  const store = await getStore();
+  if (store) await store.set(key, value);
 }
 
 export async function storageDelete(key: string): Promise<void> {

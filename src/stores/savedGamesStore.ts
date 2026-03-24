@@ -9,7 +9,14 @@ export interface SavedGame {
   savedAt: number;
 }
 
-const [savedGames, setSavedGames] = createSignal<SavedGame[]>([]);
+function readLocalSavedGames(): SavedGame[] {
+  try {
+    const raw = localStorage.getItem("tcg:my-games");
+    return raw ? (JSON.parse(raw) as SavedGame[]) : [];
+  } catch { return []; }
+}
+
+const [savedGames, setSavedGames] = createSignal<SavedGame[]>(readLocalSavedGames());
 export { savedGames };
 
 export async function loadSavedGames() {

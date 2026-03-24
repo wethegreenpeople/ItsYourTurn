@@ -61,9 +61,11 @@ function Root() {
     setCurrentPlayerName(playerName);
 
     joinRoom(roomCode, async () => {
-      const { data: roomData } = await supabase.from("room").select("active_players").eq("join_code", roomCode);
+      const { data: roomData } = await supabase.from("room").select("active_players, plugin, allowed_players").eq("join_code", roomCode);
       if (roomData && roomData[0]) {
         await supabase.from("room").update({ active_players: roomData[0].active_players + 1 }).eq("join_code", roomCode);
+        setCurrentGameType(roomData[0].plugin ?? "");
+        setCurrentMaxPlayers(roomData[0].allowed_players ?? 2);
       }
       setGameStarted(true);
     });
