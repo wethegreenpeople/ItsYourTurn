@@ -56,41 +56,6 @@ export function LandingPage(props: LandingPageProps) {
   const myGames = createMemo(() => savedGames());
   const availableGames = () => lobbyGames().filter(g => g.currentPlayers < g.maxPlayers);
 
-  const nameInputStyle = "background:rgba(18,18,19,.85);border:1px solid rgba(82,82,91,.7);color:#e8eddf;caret-color:#f5cb5c";
-  const onFocus = (e: FocusEvent) => {
-    const el = e.currentTarget as HTMLInputElement;
-    el.style.cssText += ";border-color:rgba(245,203,92,.6);background:rgba(245,203,92,.05);box-shadow:0 0 0 3px rgba(245,203,92,.12)";
-  };
-  const onBlur = (e: FocusEvent) => {
-    const el = e.currentTarget as HTMLInputElement;
-    el.style.borderColor = "rgba(82,82,91,.7)";
-    el.style.background = "rgba(18,18,19,.85)";
-    el.style.boxShadow = "";
-  };
-
-  const GoldCta = (p: { onClick: () => void; children: any }) => (
-    <button onClick={p.onClick}
-      class="px-5 py-2.5 rounded-[9px] font-cinzel font-bold text-[.78rem] tracking-[.1em] uppercase cursor-pointer border-none flex-shrink-0"
-      style="background:linear-gradient(135deg,#f5cb5c 0%,#c9a034 100%);box-shadow:0 2px 14px rgba(245,203,92,.2),inset 0 1px 0 rgba(255,255,255,.15);color:#1a1c19">
-      {p.children}
-    </button>
-  );
-
-
-
-  const LobbyFooter = () => (
-    <div class="flex-shrink-0 px-6 lg:px-8 pt-4 pb-6 border-t border-rim/40">
-      <div class="flex gap-3 items-center">
-        <input type="text" placeholder="Your name" maxLength={24}
-          value={playerName()} onInput={(e) => setPlayerName(e.currentTarget.value)}
-          class="flex-1 rounded-[9px] px-3 py-2.5 text-sm outline-none transition-all duration-150"
-          style={nameInputStyle} onFocus={onFocus as any} onBlur={onBlur as any}
-        />
-        <GoldCta onClick={() => setShowHost(true)}>Host Game</GoldCta>
-      </div>
-    </div>
-  );
-
   return (
     <div class="fixed inset-0 overflow-hidden bg-base font-body">
 
@@ -113,7 +78,6 @@ export function LandingPage(props: LandingPageProps) {
               </div>
             </Show>
           </div>
-          <LobbyFooter />
         </div>
       </Show>
 
@@ -194,6 +158,15 @@ export function LandingPage(props: LandingPageProps) {
             </button>
 
           </div>
+
+          <button onClick={() => setShowSettings(true)}
+            class="lp-action group flex items-center gap-5 px-6 py-5 text-left w-full cursor-pointer rounded-t-xl rounded-b-xl border-b-0
+                   bg-surface/90 border border-rim/60">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0 bg-white/4 border border-rim/50">⚙</div>
+            <div class="flex flex-col gap-0.5 flex-1">
+              <span class="font-cinzel font-semibold text-[1.05rem] leading-snug text-text">Settings</span>
+            </div>
+          </button>
         </div>
 
         {/* Right panel — desktop only */}
@@ -213,12 +186,6 @@ export function LandingPage(props: LandingPageProps) {
           </div>
         </div>
       </div>
-
-      {/* Gear */}
-      <button onClick={() => setShowSettings(true)} title="Settings"
-        class="absolute top-4 right-4 z-30 w-[34px] h-[34px] rounded-[8px] flex items-center justify-center text-base cursor-pointer
-               bg-surface/90 border border-rim/60 text-text-muted/40
-               transition-colors duration-150 hover:border-text-muted/40 hover:text-text-muted/80">⚙</button>
 
       {/* Modals */}
       <Show when={showHost()}>
