@@ -172,8 +172,8 @@ function App(props: { isHost?: boolean; onReturnToMenu?: () => void; onQuitGame?
             }}
             style={{
               "--active-rows": gameState.currentTurnPlayerId === currentPlayer()?.id
-                ? "1fr 1.6fr"
-                : "1.6fr 1fr",
+                ? "0.65fr 1fr"
+                : "1fr 0.65fr",
             }}
           >
             <For each={playerBoards()}>

@@ -57,7 +57,7 @@ export const CardVisual = (props: {
           style={{ height: "19%", background: "rgba(0, 0, 0, 0.78)" }}
         >
           <span
-            class="font-body text-[clamp(6px,0.5vw,9px)] font-semibold tracking-[0.1em] uppercase"
+            class="font-body text-[clamp(8px,0.9vw,16px)] font-semibold tracking-[0.1em] uppercase"
             style={{ "font-family": "var(--plugin-font-body, 'Inter', system-ui, sans-serif)", color: "var(--plugin-text-muted, #cfdbd5)" }}
           >
             {props.card.name}

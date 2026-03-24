@@ -186,7 +186,7 @@ export class RiftBound implements Plugin {
     fontDisplay: "'Cinzel', Georgia, serif",
     fontBody: "'Rajdhani', system-ui, sans-serif",
     gridColumnsTemplate: "minmax(52px, 1fr) repeat(10, 1fr) minmax(52px, 1fr)",
-    gridRowsTemplate: "repeat(6, 1fr) 1.4fr 1.4fr",
+    gridRowsTemplate: "repeat(6, 1.5fr) 1.5fr 1.5fr",
   };
 
   /** Only registers the plugin — no deck creation here. */
