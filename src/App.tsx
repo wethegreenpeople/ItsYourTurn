@@ -1,4 +1,4 @@
-import { createEffect, createMemo, For, JSX, onCleanup, Show } from "solid-js";
+import { createEffect, createMemo, createSignal, For, JSX, onCleanup, onMount, Show } from "solid-js";
 import {
   DragDropProvider,
   DragDropSensors,
@@ -300,23 +300,49 @@ function App(props: { pluginId?: string; isHost?: boolean; onReturnToMenu?: () =
       {/* Rubber-band multi-card selection */}
       <SelectionBox />
 
-      {/* Card preview — floats near long-press position, transparent backdrop closes it */}
+      {/* Card inspect — full-screen modal, scroll wheel to zoom on desktop */}
       <Show when={previewState()}>
         {() => {
           const card = previewState()!.card;
           const horiz = isHorizontal(card.id);
-          // Portrait preview: 270×378. Horizontal preview: 378×270 (swapped).
-          const pw = horiz ? 378 : 270;
-          const ph = horiz ? 270 : 378;
-          const x = Math.max(8, Math.min(window.innerWidth  - pw - 16, previewState()!.x + 15));
-          const y = Math.max(8, Math.min(window.innerHeight - ph - 16, previewState()!.y - ph));
+          const [zoom, setZoom] = createSignal(1);
+          let modalRef!: HTMLDivElement;
+
+          onMount(() => {
+            const handleKey = (e: KeyboardEvent) => {
+              if (e.key === 'Escape') hidePreview();
+            };
+            const handleWheel = (e: WheelEvent) => {
+              e.preventDefault();
+              setZoom(z => Math.min(3, Math.max(0.4, z - e.deltaY * 0.002)));
+            };
+            document.addEventListener('keydown', handleKey);
+            modalRef.addEventListener('wheel', handleWheel, { passive: false });
+            onCleanup(() => {
+              document.removeEventListener('keydown', handleKey);
+              modalRef.removeEventListener('wheel', handleWheel);
+            });
+          });
+
           return (
-            <>
-              <div class="fixed inset-0 z-[9999]" onClick={hidePreview} />
-              <div class="card-preview-popup fixed z-[10000] pointer-events-auto" style={{ left: `${x}px`, top: `${y}px`, animation: "preview-card-in 0.15s cubic-bezier(0.34, 1.56, 0.64, 1)" }}>
-                <CardVisual card={card} horizontal={horiz} />
+            <div
+              ref={modalRef!}
+              class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-md cursor-zoom-out [animation:inspect-backdrop-in_0.2s_ease-out]"
+              onClick={hidePreview}
+            >
+              <div
+                class="card-inspect-card pointer-events-none [animation:inspect-card-in_0.28s_cubic-bezier(0.34,1.4,0.64,1)]"
+                classList={{ "card-inspect-card--horizontal": horiz }}
+              >
+                <div class="pointer-events-auto origin-center transition-transform duration-75 ease-out" style={{ transform: `scale(${zoom()})` }}>
+                  <CardVisual card={card} horizontal={horiz} />
+                </div>
               </div>
-            </>
+              <button
+                class="fixed top-4 right-5 z-[10001] w-10 h-10 rounded-full bg-white/10 border border-white/20 text-white/75 text-[15px] flex items-center justify-center cursor-pointer transition-[background-color,color,border-color] duration-150 hover:bg-white/20 hover:border-white/35 hover:text-white"
+                onClick={hidePreview}
+              >✕</button>
+            </div>
           );
         }}
       </Show>
