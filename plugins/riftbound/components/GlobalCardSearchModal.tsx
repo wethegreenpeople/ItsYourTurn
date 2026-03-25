@@ -1,12 +1,12 @@
 import { createSignal, createEffect, For, Show } from "solid-js";
 import { Portal } from "solid-js/web";
-import { isGlobalSearchOpen, closeGlobalSearch } from "./globalCardSearchStore";
-import type { ApiCard } from "./deckParser";
-import { createCard } from "../../src/models/Card";
-import { addCardToDeck } from "../../src/stores/deckStore";
-import { currentPlayer } from "../../src/stores/gameStore";
-import { putCached } from "../../src/lib/cardCache";
-import { Button } from "../../src/components/ui";
+import { isGlobalSearchOpen, closeGlobalSearch } from "../utils/globalCardSearchStore";
+import type { ApiCard } from "../utils/deckParser";
+import { createCard } from "../../../src/models/Card";
+import { addCardToDeck } from "../../../src/stores/deckStore";
+import { currentPlayer } from "../../../src/stores/gameStore";
+import { putCached } from "../../../src/lib/cardCache";
+import { Button } from "../../../src/components/ui";
 
 const API_BASE = import.meta.env.DEV
   ? "/riftcodex-api"

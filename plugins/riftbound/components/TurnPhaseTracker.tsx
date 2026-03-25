@@ -1,6 +1,6 @@
 import { For, Show } from "solid-js";
-import { gameState, myUserId, setGameState } from "../../src/stores/gameStore";
-import { broadcastGameState } from "../../src/utils/socket";
+import { gameState, myUserId, setGameState } from "../../../src/stores/gameStore";
+import { broadcastGameState } from "../../../src/utils/socket";
 
 const PHASES = [
   { key: "A", label: "Awaken" },

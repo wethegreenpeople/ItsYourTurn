@@ -1,8 +1,8 @@
-import { createCard } from "../../src/models/Card";
-import { addCardToDeck, clearDeck } from "../../src/stores/deckStore";
-import { setHorizontal } from "../../src/stores/cardStateStore";
-import { getCachedById, getCachedByName, putCached } from "../../src/lib/cardCache";
-import { parseDeckList, fetchByName, fetchByRiftboundId } from "./deckParser";
+import { createCard } from "../../../src/models/Card";
+import { addCardToDeck, clearDeck } from "../../../src/stores/deckStore";
+import { setHorizontal } from "../../../src/stores/cardStateStore";
+import { getCachedById, getCachedByName, putCached } from "../../../src/lib/cardCache";
+import { parseDeckList, fetchByName, fetchByRiftboundId } from "../utils/deckParser";
 
 // ---------------------------------------------------------------------------
 // Section → zone routing
@@ -13,6 +13,8 @@ import { parseDeckList, fetchByName, fetchByRiftboundId } from "./deckParser";
  * Anything not listed falls back to "mainDeck".
  */
 const SECTION_ZONE: Record<string, string> = {
+  Legend:      "legend",
+  Champion:    "champion",
   MainDeck:    "mainDeck",
   Runes:       "UnplayedRunes",
   Battlefields: "sideboard",
@@ -24,7 +26,7 @@ function zoneForSection(section: string): string {
 }
 
 /** Zones that get cleared before loading — in-game zones (hand, played, trash) are left alone. */
-const ZONES_TO_CLEAR = ["mainDeck", "UnplayedRunes", "sideboard"];
+const ZONES_TO_CLEAR = ["mainDeck", "UnplayedRunes", "legend", "champion", "sideboard"];
 
 // ---------------------------------------------------------------------------
 // Resolver — cache-first, then API

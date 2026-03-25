@@ -1,51 +1,42 @@
-import { Plugin, PlayArea, CardAction, GameBarAction } from "../base/plugin";
-import type { PluginTheme } from "../base/plugin";
-import { DropZone } from "../../src/App";
+import { Plugin, PlayArea, CardAction, GameBarAction } from "../../base/plugin";
+import type { PluginTheme } from "../../base/plugin";
+import { DropZone } from "../../../src/App";
 import { For, Show } from "solid-js";
 import { DragEventHandler } from "@thisbeyond/solid-dnd";
 import { SortableProvider } from "@thisbeyond/solid-dnd";
-import { CardComponent } from "../../src/components/card";
-import { cardsInDeck, moveCard, moveCardToTop, moveTopCard, registerDeck } from "../../src/stores/deckStore";
-import { registerPlugin } from "../../src/stores/pluginStore";
-import { viewingPlayerId } from "../../src/stores/boardViewStore";
+import { CardComponent } from "../../../src/components/card";
+import { cardsInDeck, moveCard, moveCardAt, moveCardToTop, moveTopCard, registerDeck } from "../../../src/stores/deckStore";
+import type { Card } from "../../../src/models/Card";
+import { registerPlugin } from "../../../src/stores/pluginStore";
+import { viewingPlayerId } from "../../../src/stores/boardViewStore";
 import { loadRiftboundDeck } from "./deckLoader";
-import { showDeckContextMenu } from "../../src/stores/deckContextMenuStore";
-import { getDropPointer } from "../../src/stores/freePlaceStore";
-import { getCardPos, setCardPos } from "../../src/stores/cardPositionsStore";
-import { startTargeting, stopTargeting } from "../../src/stores/targetingStore";
-import { startAttaching, getAttachments, getParent, detachCard, detachAll } from "../../src/stores/attachmentStore";
-import { addCounter, resetCounters, getBuffs, clearBuffs } from "../../src/stores/counterStore";
-import { openAddBuff } from "../../src/stores/addBuffStore";
-import { findDeckForCard } from "../../src/stores/deckStore";
-import { showPreview } from "../../src/stores/cardPreviewStore";
-import { getSelectedIds, clearSelection } from "../../src/stores/selectionStore";
-import { setFaceDown, toggleFaceDown, toggleHorizontal, toggleTapped } from "../../src/stores/cardStateStore";
-import { DeckStack } from "../../src/components/DeckStack";
-import { showZoneLabels } from "../../src/stores/settingsStore";
-import { openGlobalSearch } from "../riftbound/globalCardSearchStore";
-import { GlobalCardSearchModal } from "../riftbound/GlobalCardSearchModal";
-import { TurnPhaseTracker } from "../riftbound/TurnPhaseTracker";
+import { showDeckContextMenu } from "../../../src/stores/deckContextMenuStore";
+import { getDropPointer } from "../../../src/stores/freePlaceStore";
+import { startTargeting, stopTargeting } from "../../../src/stores/targetingStore";
+import { startAttaching, getAttachments, getParent, detachCard, detachAll } from "../../../src/stores/attachmentStore";
+import { addCounter, resetCounters, getBuffs, clearBuffs } from "../../../src/stores/counterStore";
+import { openAddBuff } from "../../../src/stores/addBuffStore";
+import { findDeckForCard } from "../../../src/stores/deckStore";
+import { showPreview } from "../../../src/stores/cardPreviewStore";
+import { getSelectedIds, clearSelection } from "../../../src/stores/selectionStore";
+import { setFaceDown, toggleFaceDown, toggleHorizontal, toggleTapped } from "../../../src/stores/cardStateStore";
+import { DeckStack } from "../../../src/components/DeckStack";
+import { getPluginSetting, showZoneLabels } from "../../../src/stores/settingsStore";
+import { openGlobalSearch } from "../utils/globalCardSearchStore";
+import { GlobalCardSearchModal } from "../components/GlobalCardSearchModal";
+import { TurnPhaseTracker } from "../components/TurnPhaseTracker";
 
-// Renders cards freely positioned by (x%, y%), skipping cards attached to a parent.
-// Each card gets its own isolated SortableProvider so createSortable has context but no
-// siblings to sort against — preventing the swap-reorder animation from firing.
-const FreeCards = (props: { deckId: string; zone: string; horizontal?: boolean }) => (
-  <For each={cardsInDeck(props.deckId).filter(c => !getParent(c.id))}>
-    {(card) => (
-      <SortableProvider ids={[card.id]}>
-        <div
-          class="card-freeplace-wrap"
-          style={{
-            left: `${getCardPos(card.id)?.x ?? 15}%`,
-            top: `${getCardPos(card.id)?.y ?? 20}%`,
-          }}
-        >
-          <CardComponent card={card} zoneId={props.zone} horizontal={props.horizontal} />
-        </div>
-      </SortableProvider>
-    )}
-  </For>
-);
+// Renders cards in sortable snap layout, skipping cards attached to a parent
+const SnapCards = (props: { deckId: string; zone: string; horizontal?: boolean }) => {
+  const freeCards = () => cardsInDeck(props.deckId).filter(c => !getParent(c.id));
+  return (
+    <SortableProvider ids={freeCards().map(c => c.id)}>
+      <For each={freeCards()}>
+        {(card) => <CardComponent card={card} zoneId={props.zone} horizontal={props.horizontal} />}
+      </For>
+    </SortableProvider>
+  );
+};
 
 // Zone tint classes — Tailwind instead of CSS
 const zoneTint = {
@@ -73,15 +64,15 @@ const ZoneInner = (props: { label: string; children: any }) => (
 
 const ZoneCards = (props: { deckId: string; zone: string; horizontal?: boolean }) => (
   <div
-    class="zone-cards zone-cards--free flex flex-wrap gap-1 content-start items-start flex-1 min-h-0 p-[2px_4px_4px] overflow-y-auto overflow-x-hidden"
+    class="zone-cards flex flex-wrap gap-1 content-start items-start flex-1 min-h-0 p-[2px_4px_4px] overflow-y-auto overflow-x-hidden"
     classList={{ "zone-cards--empty": cardsInDeck(props.deckId).filter(c => !getParent(c.id)).length === 0 }}
   >
-    <FreeCards deckId={props.deckId} zone={props.zone} horizontal={props.horizontal} />
+    <SnapCards deckId={props.deckId} zone={props.zone} horizontal={props.horizontal} />
   </div>
 );
 
-export class RiftBoundFreePlace implements Plugin {
-  public id: string = "riftbound-freeplace";
+export class RiftBound implements Plugin {
+  public id: string = "riftbound";
   public startingScore: number = 0;
   public scoreLabel: string = "Score";
 
@@ -214,6 +205,8 @@ export class RiftBoundFreePlace implements Plugin {
     textMuted: "#c5c3d8",
     fontDisplay: "'Cinzel', Georgia, serif",
     fontBody: "'Rajdhani', system-ui, sans-serif",
+    gridColumnsTemplate: "minmax(52px, 1fr) repeat(10, 1fr) minmax(52px, 1fr)",
+    gridRowsTemplate: "repeat(6, 1.5fr) 1.5fr 1.5fr",
   };
 
   /** Only registers the plugin — no deck creation here. */
@@ -229,11 +222,15 @@ export class RiftBoundFreePlace implements Plugin {
   registerPlayer(playerId: string): void {
     const p = playerId;
     registerDeck(`${p}:hand`);
+    registerDeck(`${p}:battlefield`);
+    registerDeck(`${p}:base`);
     registerDeck(`${p}:UnplayedRunes`);
+    registerDeck(`${p}:PlayedRunes`);
     registerDeck(`${p}:mainDeck`);
     registerDeck(`${p}:trash`);
+    registerDeck(`${p}:champion`);
+    registerDeck(`${p}:legend`);
     registerDeck(`${p}:sideboard`);
-    registerDeck(`${p}:board`);
   }
 
   /** Returns the zone layout for a specific player, using player-scoped deck IDs. */
@@ -241,22 +238,57 @@ export class RiftBoundFreePlace implements Plugin {
     const p = playerId;
     return [
       {
-        id: `${p}:board`,
+        id: `${p}:battlefield`,
         className: zoneTint.battlefield,
-        region: { xStart: 1, xFinish: 13, yStart: 1, yFinish: 11 },
+        region: { xStart: 1, xFinish: getPluginSetting("boardLayout", "vertical") === "vertical" ? 11 : 9, yStart: 1, yFinish: 4 },
         content: () => (
-          <DropZone id={`${p}:board`}>
-            <ZoneInner label="board">
-              <ZoneCards deckId={`${p}:board`} zone={`${p}:board`} />
+          <DropZone id={`${p}:battlefield`}>
+            <ZoneInner label="Battlefield">
+              <ZoneCards deckId={`${p}:battlefield`} zone={`${p}:battlefield`} />
             </ZoneInner>
           </DropZone>
         ),
       },
-
+      {
+        id: `${p}:legend`,
+        className: zoneTint.battlefield,
+        region: { xStart: getPluginSetting("boardLayout", "vertical") === "vertical" ? 11 : 9, xFinish: getPluginSetting("boardLayout", "vertical") === "vertical" ? 12 : 11, yStart: 1, yFinish: 4 },
+        content: () => (
+          <DropZone id={`${p}:legend`}>
+            <ZoneInner label="Legend">
+              <ZoneCards deckId={`${p}:legend`} zone={`${p}:legend`} />
+            </ZoneInner>
+          </DropZone>
+        ),
+      },
+      {
+        id: `${p}:champion`,
+        className: zoneTint.battlefield,
+        region: { xStart: getPluginSetting("boardLayout", "vertical") === "vertical" ? 12 : 11, xFinish: 13, yStart: 1, yFinish: 4 },
+        content: () => (
+          <DropZone id={`${p}:champion`}>
+            <ZoneInner label="Champion">
+              <ZoneCards deckId={`${p}:champion`} zone={`${p}:champion`} />
+            </ZoneInner>
+          </DropZone>
+        ),
+      },
+      {
+        id: `${p}:base`,
+        className: zoneTint.base,
+        region: { xStart: 1, xFinish: 12, yStart: 4, yFinish: 7 },
+        content: () => (
+          <DropZone id={`${p}:base`}>
+            <ZoneInner label="Base">
+              <ZoneCards deckId={`${p}:base`} zone={`${p}:base`} />
+            </ZoneInner>
+          </DropZone>
+        ),
+      },
       {
         id: `${p}:mainDeck`,
         className: zoneTint.deck,
-        region: { xStart: 1, xFinish: 3, yStart: 11, yFinish: 13 },
+        region: { xStart: 12, xFinish: 13, yStart: 4, yFinish: 7 },
         content: () => (
           <DropZone id={`${p}:mainDeck`}>
             <DeckStack
@@ -271,22 +303,34 @@ export class RiftBoundFreePlace implements Plugin {
       {
         id: `${p}:UnplayedRunes`,
         className: zoneTint.deck,
-        region: { xStart: 3, xFinish: 5, yStart: 11, yFinish: 13 },
+        region: { xStart: 1, xFinish: 2, yStart: 7, yFinish: 9 },
         content: () => (
           <DropZone id={`${p}:UnplayedRunes`}>
             <DeckStack
               count={cardsInDeck(`${p}:UnplayedRunes`).length}
               title="Rune Deck — click to reveal top card, right-click for options"
-              onClick={() => moveTopCard(`${p}:UnplayedRunes`, `${p}:hand`)}
+              onClick={() => moveTopCard(`${p}:UnplayedRunes`, `${p}:PlayedRunes`)}
               onContextMenu={(e) => showDeckContextMenu(e.clientX, e.clientY, `${p}:UnplayedRunes`)}
             />
           </DropZone>
         ),
       },
       {
+        id: `${p}:PlayedRunes`,
+        className: zoneTint.runes,
+        region: { xStart: 2, xFinish: 12, yStart: 7, yFinish: 9 },
+        content: () => (
+          <DropZone id={`${p}:PlayedRunes`}>
+            <ZoneInner label="Runes">
+              <ZoneCards deckId={`${p}:PlayedRunes`} zone={`${p}:PlayedRunes`} />
+            </ZoneInner>
+          </DropZone>
+        ),
+      },
+      {
         id: `${p}:trash`,
         className: zoneTint.deck,
-        region: { xStart: 5, xFinish: 7, yStart: 11, yFinish: 13 },
+        region: { xStart: 12, xFinish: 13, yStart: 7, yFinish: 9 },
         content: () => (
           <DropZone id={`${p}:trash`}>
             <DeckStack
@@ -329,46 +373,27 @@ export class RiftBoundFreePlace implements Plugin {
     const targetId = hitZoneId ?? (droppable?.id as string | undefined);
     if (!targetId) return;
 
-    // Prefer the live zone element for rect calculation; fall back to droppable.node
-    const zoneEl = (document.querySelector(`[data-zone="${targetId}"]`) as HTMLElement | null)
-      ?? (droppable?.node as HTMLElement | undefined);
+    const targetData = droppable?.data as { card?: Card; zoneId?: string } | null;
 
-    const clamp = (v: number) => Math.max(2, Math.min(98, v));
-    const zoneRect = zoneEl?.getBoundingClientRect();
-    const relX = zoneRect ? clamp(((px - zoneRect.left) / zoneRect.width) * 100) : 50;
-    const relY = zoneRect ? clamp(((py - zoneRect.top) / zoneRect.height) * 100) : 50;
-
-    // Multi-select: move all selected cards preserving their relative positions
+    // Multi-select: move all selected cards to the target zone
     const selected = getSelectedIds();
     if (selected.size > 1 && selected.has(cardId)) {
-      const origin = getCardPos(cardId) ?? { x: 15, y: 20 };
-      const dx = relX - origin.x;
-      const dy = relY - origin.y;
       selected.forEach(id => {
-        const pos = getCardPos(id) ?? { x: 15, y: 20 };
         moveCard(id, targetId);
-        setCardPos(id, clamp(pos.x + dx), clamp(pos.y + dy));
-        // Move attachments with each selected card
-        getAttachments(id).forEach(attachedId => {
-          moveCard(attachedId, targetId);
-          setCardPos(attachedId, clamp(pos.x + dx), clamp(pos.y + dy));
-        });
+        // Move attachments along with each selected card
+        getAttachments(id).forEach(attachedId => moveCard(attachedId, targetId));
       });
       clearSelection();
       return;
     }
 
-    if (zoneRect) {
-      moveCard(cardId, targetId);
-      setCardPos(cardId, relX, relY);
+    if (targetData?.card && targetData?.zoneId) {
+      moveCardAt(cardId, targetData.zoneId, targetId);
     } else {
       moveCard(cardId, targetId);
     }
 
-    // Move all attachments to same zone and position as the parent
-    getAttachments(cardId).forEach(attachedId => {
-      moveCard(attachedId, targetId);
-      if (zoneRect) setCardPos(attachedId, relX, relY);
-    });
+    // Move all attachments to the same zone as the parent
+    getAttachments(cardId).forEach(attachedId => moveCard(attachedId, targetId));
   };
 }
