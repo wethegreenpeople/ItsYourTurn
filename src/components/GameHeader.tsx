@@ -42,7 +42,7 @@ const PlayerPanel = (props: { player: Player }) => {
         >
           {props.player.name}
         </span>
-        <Show when={isTurn()}>
+        <Show when={isTurn() && isLocal()}>
           <span class="turn-badge hidden lg:inline font-body text-[clamp(7px,0.6vw,9px)] font-bold tracking-[0.14em] uppercase text-gold bg-gold/12 border border-gold/40 rounded-[3px] px-1 py-px whitespace-nowrap" style={{ animation: "turn-pulse 2.5s ease-in-out infinite" }}>YOUR TURN</span>
         </Show>
       </div>
