@@ -47,7 +47,8 @@ export const LoadDeckModal = (props: { onClose?: () => void } = {}) => {
       if (errs.length > 0) {
         setErrors(errs);
       } else {
-        closeModal();
+        setOpen(false);
+        props.onClose?.();
       }
     } catch (e) {
       setErrors([String(e)]);
