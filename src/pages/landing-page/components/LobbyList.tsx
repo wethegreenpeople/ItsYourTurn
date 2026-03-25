@@ -1,7 +1,7 @@
 import { LobbyEntry } from "../../../utils/lobby";
 import { createMemo, createSignal, For, onCleanup, Show } from "solid-js";
 
- export const LobbyList = (props: { availableGames: LobbyEntry[], closeLobby: () => void, joinGame: (roomCode: string, playerName: string) => void, playerName: string }) => (
+ export const LobbyList = (props: { availableGames: LobbyEntry[], onJoinRequest: (game: LobbyEntry) => void }) => (
    <div class="flex flex-col gap-2.5">
      <Show
        when={props.availableGames.length > 0}
@@ -49,7 +49,7 @@ import { createMemo, createSignal, For, onCleanup, Show } from "solid-js";
                class="px-3.5 py-1.5 rounded-[7px] border border-gold/40 bg-gold/10 text-gold
                       font-cinzel text-[.72rem] font-semibold tracking-wider cursor-pointer whitespace-nowrap flex-shrink-0
                       transition-colors duration-150 hover:bg-gold/18 hover:border-gold/65 hover:shadow-[0_2px_12px_rgba(245,203,92,.12)]"
-               onClick={() => { props.closeLobby(); props.joinGame(game.roomCode, props.playerName.trim() || "Player"); }}
+               onClick={() => props.onJoinRequest(game)}
              >Join</button>
            </div>
          )}

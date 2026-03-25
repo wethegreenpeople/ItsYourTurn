@@ -7,6 +7,7 @@ import { JoinModal } from "../../components/JoinModal";
 import { LobbyHeader } from "./components/LobbyHeader";
 import { SavedGamesList } from "./components/SavedGames";
 import { LobbyList } from "./components/LobbyList";
+import { LobbyJoinModal } from "../../components/LobbyJoinModal";
 import { supabase } from "../../utils/supabase";
 
 
@@ -42,6 +43,7 @@ export function LandingPage(props: LandingPageProps) {
   const [lobbyOpen, setLobbyOpen] = createSignal(false);
   const [lobbyGames, setLobbyGames] = createSignal<LobbyEntry[]>([]);
   const [lobbyLoading, setLobbyLoading] = createSignal(false);
+  const [pendingLobbyGame, setPendingLobbyGame] = createSignal<LobbyEntry | null>(null);
 
   const openLobby = () => {
     setLobbyOpen(true);
@@ -106,7 +108,7 @@ export function LandingPage(props: LandingPageProps) {
           </div>
           <LobbyHeader />
           <div class="flex-1 overflow-y-auto px-6 py-5" style="scrollbar-width:thin;scrollbar-color:rgba(82,82,91,.5) transparent">
-            <LobbyList availableGames={availableGames()} closeLobby={closeLobby} joinGame={props.onJoinGame} playerName={playerName()} />
+            <LobbyList availableGames={availableGames()} onJoinRequest={(game) => { closeLobby(); setPendingLobbyGame(game); }} />
             <Show when={myGames().length > 0}>
               <div class="mt-6">
                 <p class="text-[.65rem] font-semibold tracking-[.35em] uppercase mb-3 m-0 text-text-muted/40">My Games</p>
@@ -211,7 +213,7 @@ export function LandingPage(props: LandingPageProps) {
             <LobbyHeader />
             <div class="flex-1 overflow-y-auto px-8 py-6" style="scrollbar-width:thin;scrollbar-color:rgba(82,82,91,.4) transparent">
               <p class="text-[.65rem] font-semibold tracking-[.35em] uppercase mb-3 m-0 text-text-muted/40">Available Games</p>
-              <LobbyList availableGames={availableGames()} closeLobby={closeLobby} joinGame={props.onJoinGame} playerName={playerName()} />
+              <LobbyList availableGames={availableGames()} onJoinRequest={(game) => setPendingLobbyGame(game)} />
               <Show when={myGames().length > 0}>
                 <div class="mt-8">
                   <p class="text-[.65rem] font-semibold tracking-[.35em] uppercase mb-3 m-0 text-text-muted/40">My Games</p>
@@ -224,6 +226,16 @@ export function LandingPage(props: LandingPageProps) {
       </div>
 
       {/* Modals */}
+      <Show when={pendingLobbyGame() !== null}>
+        <LobbyJoinModal
+          game={pendingLobbyGame()!}
+          playerName={playerName()}
+          onPlayerNameChange={(n) => { setPlayerName(n); submitName(n); }}
+          onConfirm={() => props.onJoinGame(pendingLobbyGame()!.roomCode, submitName(playerName()))}
+          onClose={() => setPendingLobbyGame(null)}
+        />
+      </Show>
+
       <Show when={showHost()}>
         <HostModal
           plugins={plugins}
