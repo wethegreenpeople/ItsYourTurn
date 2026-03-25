@@ -152,9 +152,10 @@ body { margin: 0; overflow: hidden; }
     gap: 4px;
     transition: grid-template-rows 0.4s ease;
   }
-  /* Side-by-side: boards sit next to each other in a row */
+  /* Side-by-side: boards wrap into rows of 2, local player always top-left */
   .game-boards-wrapper--horizontal {
     flex-direction: row !important;
+    flex-wrap: wrap;
     gap: 4px;
   }
   /* Cards in side-by-side zones are ~15% smaller to fit the narrower boards */
@@ -167,11 +168,14 @@ body { margin: 0; overflow: hidden; }
     width: calc(min(calc(100cqh - 26px), 106px) * 1.39);
   }
   .game-boards-wrapper--horizontal .player-board {
-    flex: 1;
+    flex: 0 0 calc(50% - 2px);
+    min-width: 0;
     border-bottom: none !important;
     border-right: 1px solid #3F3F46;
   }
-  .game-boards-wrapper--horizontal .player-board:last-of-type {
+  /* Remove right border from right-column boards and any lone board on the last row */
+  .game-boards-wrapper--horizontal .player-board:nth-child(2n),
+  .game-boards-wrapper--horizontal .player-board:last-child {
     border-right: none;
   }
   .player-board { border-bottom: 1px solid #3F3F46; }
