@@ -75,9 +75,15 @@ export { gameState, setGameState, currentPlayer, setCurrentPlayer };
 
 /** Add a player to the local state and broadcast. */
 export function addPlayer(playerId: string, playerName: string) {
+  // Don't re-add the player if they're already there
   if (gameState.players.some((p) => p.id === playerId)) return;
   const player: Player = { id: playerId, name: playerName, score: gameState.playerStartingScore };
   setGameState("players", gameState.players.length, player);
+
+  // If we're the first player, set them as the current turn player
+  if (gameState.players.length === 1) {
+    setGameState("currentTurnPlayerId", playerId);
+  }
   broadcastGameState();
 }
 
