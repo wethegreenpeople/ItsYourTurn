@@ -24,6 +24,7 @@ import { DeckStack } from "../../src/components/DeckStack";
 import { getPluginSetting, showZoneLabels } from "../../src/stores/settingsStore";
 import { openGlobalSearch } from "./globalCardSearchStore";
 import { GlobalCardSearchModal } from "./GlobalCardSearchModal";
+import { TurnPhaseTracker } from "./TurnPhaseTracker";
 
 // Renders cards in sortable snap layout, skipping cards attached to a parent
 const SnapCards = (props: { deckId: string; zone: string; horizontal?: boolean }) => {
@@ -190,6 +191,8 @@ export class RiftBound implements Plugin {
       action: openGlobalSearch,
     },
   ];
+
+  gameBarWidgets = [<TurnPhaseTracker />];
 
   renderOverlays = () => <GlobalCardSearchModal />;
 

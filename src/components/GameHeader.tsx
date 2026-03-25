@@ -1,4 +1,4 @@
-import { createSignal, For, Show } from "solid-js";
+import { createSignal, For, Show, type JSX } from "solid-js";
 import {
   gameState,
   adjustScore,
@@ -77,6 +77,7 @@ export const GameHeader = (props: {
   onReturnToMenu?: () => void;
   onQuitGame?: () => void;
   extraActions?: GameBarAction[];
+  extraWidgets?: JSX.Element[];
 }) => {
   const isMyTurn = () => gameState.currentTurnPlayerId === myUserId;
   const [menuOpen, setMenuOpen] = createSignal(false);
@@ -175,6 +176,9 @@ export const GameHeader = (props: {
         {/* Desktop actions */}
         <div class="hidden lg:flex lg:flex-col lg:items-stretch lg:gap-2 lg:pt-4 lg:border-t lg:border-raised lg:mt-4 lg:flex-shrink-0">
           <EndTurnBtn />
+          <For each={props.extraWidgets ?? []}>
+            {(widget) => widget}
+          </For>
           <LoadDeckModal />
           <SideboardBtn showLabel />
           <For each={props.extraActions ?? []}>

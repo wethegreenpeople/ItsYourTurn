@@ -46,6 +46,7 @@ export interface GameState {
   scoreLabel: string;
   playerStartingScore: number;
   showMessaging: boolean;
+  turnPhase: number;
 }
 
 export interface Player {
@@ -69,6 +70,7 @@ const [gameState, setGameState] = createStore<GameState>({
   scoreLabel: "HP",
   showMessaging: false,
   playerStartingScore: 20,
+  turnPhase: 0,
 });
 
 export { gameState, setGameState, currentPlayer, setCurrentPlayer };
@@ -113,11 +115,13 @@ export function endTurn() {
   const nextIdx = (currentIdx + 1) % ids.length;
   getActivePlugin()?.onTurnEnd?.(gameState.currentTurnPlayerId);
   setGameState("currentTurnPlayerId", ids[nextIdx]);
+  setGameState("turnPhase", 0);
   getActivePlugin()?.onTurnStart?.(ids[nextIdx]);
   const nextPlayer = gameState.players[nextIdx];
   logEvent(`${nextPlayer?.name ?? "?"}'s turn begins`, ids[nextIdx]);
   broadcastGameState();
 }
+
 
 export function toggleMessaging() {
   setGameState("showMessaging", (v) => !v);
@@ -145,6 +149,7 @@ export function resetGameState() {
     scoreLabel: "HP",
     showMessaging: false,
     playerStartingScore: 20,
+    turnPhase: 0,
   }));
 }
 

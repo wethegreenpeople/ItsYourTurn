@@ -164,7 +164,7 @@ function App(props: { pluginId?: string; isHost?: boolean; onReturnToMenu?: () =
           background: "radial-gradient(ellipse 100% 55% at 50% 0%, rgba(40, 40, 48, 0.25) 0%, transparent 70%), linear-gradient(180deg, #1c1c1f 0%, #111113 100%)",
         }}
       >
-        <GameHeader onReturnToMenu={props.onReturnToMenu} onQuitGame={props.onQuitGame} extraActions={plugin.gameBarActions} />
+        <GameHeader onReturnToMenu={props.onReturnToMenu} onQuitGame={props.onQuitGame} extraActions={plugin.gameBarActions} extraWidgets={plugin.gameBarWidgets} />
         <div class="flex flex-col flex-1 min-h-0 min-w-0">
 
           {/* Board switcher — mobile only, hidden on desktop via lg:hidden */}

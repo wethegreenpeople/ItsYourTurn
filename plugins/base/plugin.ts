@@ -72,6 +72,11 @@ export interface Plugin {
   /** Extra buttons added to the game bar sidebar and mobile hamburger menu. */
   gameBarActions?: GameBarAction[];
   /**
+   * Optional widgets rendered in the desktop sidebar only (not mobile hamburger).
+   * Use this for complex plugin-specific UI like turn phase trackers.
+   */
+  gameBarWidgets?: JSX.Element[];
+  /**
    * Optional extra overlays/modals rendered by the plugin (e.g. card search modal).
    * Called inside the DragDropProvider in App.tsx.
    */

@@ -24,6 +24,7 @@ import { DeckStack } from "../../src/components/DeckStack";
 import { showZoneLabels } from "../../src/stores/settingsStore";
 import { openGlobalSearch } from "../riftbound/globalCardSearchStore";
 import { GlobalCardSearchModal } from "../riftbound/GlobalCardSearchModal";
+import { TurnPhaseTracker } from "../riftbound/TurnPhaseTracker";
 
 // Renders cards freely positioned by (x%, y%), skipping cards attached to a parent.
 // Each card gets its own isolated SortableProvider so createSortable has context but no
@@ -199,6 +200,8 @@ export class RiftBoundFreePlace implements Plugin {
       action: openGlobalSearch,
     },
   ];
+
+  gameBarWidgets = [<TurnPhaseTracker />];
 
   renderOverlays = () => <GlobalCardSearchModal />;
 
