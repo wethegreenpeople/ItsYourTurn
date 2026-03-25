@@ -349,6 +349,56 @@ body.attaching-mode [data-card-id] .tcg-card {
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
+/* ===================== ALT-HOVER CARD PREVIEW ===================== */
+@media (max-width: 767px) {
+  .card-alt-hover-preview { display: none !important; }
+}
+@keyframes alt-hover-in {
+  from { opacity: 0; transform: scale(0.88) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.card-alt-hover-preview .card-footer { display: none; }
+.card-alt-hover-preview .tcg-card {
+  width: 262px !important;
+  height: 365px !important;
+  cursor: default;
+  box-shadow:
+    0 28px 72px rgba(0,0,0,0.92),
+    0 0 36px rgba(245,203,92,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.07);
+  animation: alt-hover-in 0.14s cubic-bezier(0.22,1,0.36,1) both;
+}
+.card-alt-hover-preview .tcg-card--horizontal {
+  width: 365px !important;
+  height: 262px !important;
+}
+.card-alt-hover-preview .tcg-card:hover { transform: none; }
+
+/* While Alt is held, suppress the card lift/scale so the element stays stable
+   under the cursor (prevents the hover-transform flickering loop) */
+body.alt-hover-mode .tcg-card:hover {
+  transform: none;
+  transition: none;
+  box-shadow: 0 0 0 1.5px rgba(245,203,92,0.55), 0 4px 14px rgba(0,0,0,0.5);
+  z-index: 100;
+}
+
+/* ===================== KEYCAP BADGES ===================== */
+kbd.keycap {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 1px 6px; min-width: 22px;
+  border: 1px solid rgba(245,203,92,0.3);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: rgba(39,39,42,0.9);
+  color: #c8c8d4;
+  font-family: 'Inter', ui-monospace, monospace;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.04em; line-height: 1.6;
+  white-space: nowrap;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07);
+  user-select: none;
+}
+
 /* ===================== CARD INSPECT MODAL ===================== */
 @keyframes inspect-backdrop-in {
   from { opacity: 0; }

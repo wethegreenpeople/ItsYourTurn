@@ -2,12 +2,19 @@ import { For, Show } from "solid-js";
 import { gameState, myUserId, setGameState } from "../../../src/stores/gameStore";
 import { broadcastGameState } from "../../../src/utils/socket";
 
-const PHASES = [
+export const PHASES = [
   { key: "A", label: "Awaken" },
   { key: "B", label: "Begin" },
   { key: "C", label: "Channel" },
   { key: "D", label: "Draw" },
 ] as const;
+
+/** Advance to the next turn phase. No-op when it's not the local player's turn. */
+export function advanceTurnPhase(): void {
+  if (gameState.currentTurnPlayerId !== myUserId) return;
+  setGameState("turnPhase", (gameState.turnPhase + 1) % PHASES.length);
+  broadcastGameState();
+}
 
 export const TurnPhaseTracker = () => {
   const phase = () => gameState.turnPhase ?? 0;

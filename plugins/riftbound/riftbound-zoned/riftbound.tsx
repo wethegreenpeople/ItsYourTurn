@@ -24,7 +24,7 @@ import { DeckStack } from "../../../src/components/DeckStack";
 import { getPluginSetting, showZoneLabels } from "../../../src/stores/settingsStore";
 import { openGlobalSearch } from "../utils/globalCardSearchStore";
 import { GlobalCardSearchModal } from "../components/GlobalCardSearchModal";
-import { TurnPhaseTracker } from "../components/TurnPhaseTracker";
+import { TurnPhaseTracker, advanceTurnPhase } from "../components/TurnPhaseTracker";
 
 // Renders cards in sortable snap layout, skipping cards attached to a parent
 const SnapCards = (props: { deckId: string; zone: string; horizontal?: boolean }) => {
@@ -75,6 +75,18 @@ export class RiftBound implements Plugin {
   public id: string = "riftbound";
   public startingScore: number = 0;
   public scoreLabel: string = "Score";
+
+  keyBindings = [
+    {
+      id: "riftbound:advance-phase",
+      label: "Advance Turn Phase",
+      description: "Jump to the next phase of your turn",
+      category: "Riftbound",
+      pluginId: "riftbound",
+      defaultCombo: { key: " ", ctrl: true },
+      action: () => advanceTurnPhase(),
+    },
+  ];
 
   settings = [
     {

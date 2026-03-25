@@ -24,7 +24,7 @@ import { DeckStack } from "../../../src/components/DeckStack";
 import { showZoneLabels } from "../../../src/stores/settingsStore";
 import { openGlobalSearch } from "../utils/globalCardSearchStore";
 import { GlobalCardSearchModal } from "../components/GlobalCardSearchModal";
-import { TurnPhaseTracker } from "../components/TurnPhaseTracker";
+import { TurnPhaseTracker, advanceTurnPhase } from "../components/TurnPhaseTracker";
 
 // Renders cards freely positioned by (x%, y%), skipping cards attached to a parent.
 // Each card gets its own isolated SortableProvider so createSortable has context but no
@@ -84,6 +84,18 @@ export class RiftBoundFreePlace implements Plugin {
   public id: string = "riftbound-freeplace";
   public startingScore: number = 0;
   public scoreLabel: string = "Score";
+
+  keyBindings = [
+    {
+      id: "riftbound:advance-phase",
+      label: "Advance Turn Phase",
+      description: "Jump to the next phase of your turn",
+      category: "Riftbound",
+      pluginId: "riftbound-freeplace",
+      defaultCombo: { key: " ", ctrl: true },
+      action: () => advanceTurnPhase(),
+    },
+  ];
 
   settings = [
     {

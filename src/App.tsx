@@ -11,7 +11,7 @@ import "./App.css";
 import { CardComponent, CardVisual } from "./components/card";
 import { Card } from "./models/Card";
 import { Plugins, setActivePlugin } from "./stores/pluginStore";
-import { cardsInDeck, moveCard } from "./stores/deckStore";
+import { cardsInDeck, moveCard, findDeckForCard } from "./stores/deckStore";
 import { viewingPlayerId, setViewingPlayerId } from "./stores/boardViewStore";
 import { currentPlayer, gameState, initGame } from "./stores/gameStore";
 import { GameHeader } from "./components/GameHeader";
@@ -29,6 +29,12 @@ import { isHorizontal } from "./stores/cardStateStore";
 import { DragBoardSwitcher } from "./components/DragBoardSwitcher";
 import { SettingsModal } from "./components/SettingsModal";
 import { getPluginSetting, showZoneLabels } from "./stores/settingsStore";
+import {
+  executeBindings, registerKeyBinding,
+  altHoverCard, setAltHoverCard,
+  altHoverPos, setAltHoverPos,
+  getEffectiveCombo,
+} from "./stores/keybindingStore";
 
 export const DropZone = (props: { id: string; children: JSX.Element }) => {
   const droppable = createDroppable(props.id);
@@ -47,7 +53,10 @@ function App(props: { pluginId?: string; isHost?: boolean; onReturnToMenu?: () =
   const plugin: Plugin | undefined = Plugins.find(s => s.id === props.pluginId) ?? Plugins[0];
 
   // Set active plugin so lifecycle hooks work from deckStore/gameStore
-  if (plugin) setActivePlugin(plugin);
+  if (plugin) {
+    setActivePlugin(plugin);
+    plugin.keyBindings?.forEach(registerKeyBinding);
+  }
 
   // Track registered players so registerPlayer/createPlayerAreas only run once per player.
   const registeredPlayers = new Map<string, { playerId: string; areas: ReturnType<Plugin["createPlayerAreas"]> }>();
@@ -143,6 +152,97 @@ function App(props: { pluginId?: string; isHost?: boolean; onReturnToMenu?: () =
     onCleanup(() => {
       document.removeEventListener("keydown", onKey);
       document.removeEventListener("click", onDocClick, { capture: true });
+    });
+  });
+
+  // ── Alt-hover positioning memos ──────────────────────────────────────────
+  const altPreviewLeft = createMemo(() => {
+    const { x } = altHoverPos();
+    const CARD_W = 262, GAP = 22, MARGIN = 14;
+    let left = x + GAP;
+    if (left + CARD_W + MARGIN > window.innerWidth) left = x - CARD_W - GAP;
+    return Math.max(MARGIN, left);
+  });
+  const altPreviewTop = createMemo(() => {
+    const { y } = altHoverPos();
+    const CARD_W = 262, CARD_H = Math.round(CARD_W / 0.718), MARGIN = 14;
+    return Math.max(MARGIN, Math.min(window.innerHeight - CARD_H - MARGIN, y - CARD_H / 2));
+  });
+
+  // ── Global keyboard executor + Alt-hover tracking ────────────────────────
+  onMount(() => {
+    // Plain variables — no signals needed, just bookkeeping for the keydown case
+    let lastMouseX = 0;
+    let lastMouseY = 0;
+    // The card-wrapper element the mouse is currently over (or null).
+    // Updated on every mousemove via e.target.closest — reliable and avoids
+    // elementFromPoint (which can return fixed overlays unexpectedly).
+    let lastCardEl: Element | null = null;
+
+    const resolveCard = (cardEl: Element | null) =>
+      cardEl
+        ? (findDeckForCard(cardEl.getAttribute("data-card-id")!)
+            ?.cards.find(c => c.id === cardEl.getAttribute("data-card-id")!) ?? null)
+        : null;
+
+    const isModHeld = (e: MouseEvent | KeyboardEvent) => {
+      const key = getEffectiveCombo("global:alt-hover-card").key;
+      return (key === "Alt"     && (e as MouseEvent).altKey)   ||
+             (key === "Control" && (e as MouseEvent).ctrlKey)  ||
+             (key === "Shift"   && (e as MouseEvent).shiftKey) ||
+             (key === "Meta"    && (e as MouseEvent).metaKey);
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      executeBindings(e);
+      const combo = getEffectiveCombo("global:alt-hover-card");
+      // Skip key-repeat events (fired after ~500ms of holding) to prevent flicker
+      if (e.key !== combo.key || e.repeat) return;
+      document.body.classList.add("alt-hover-mode");
+      // Show preview immediately for whichever card is already under the cursor
+      const card = resolveCard(lastCardEl);
+      if (card) {
+        setAltHoverPos({ x: lastMouseX, y: lastMouseY });
+        if (altHoverCard()?.id !== card.id) setAltHoverCard(card);
+      }
+    };
+
+    const onKeyUp = (e: KeyboardEvent) => {
+      const combo = getEffectiveCombo("global:alt-hover-card");
+      if (e.key !== combo.key) return;
+      document.body.classList.remove("alt-hover-mode");
+      setAltHoverCard(null);
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+      // Track whichever card-wrapper is under the cursor using the event target
+      // (reliable — works inside zone-panel overflow, with transforms, etc.)
+      lastCardEl = (e.target as Element).closest("[data-card-id]");
+
+      if (!isModHeld(e)) {
+        if (altHoverCard()) setAltHoverCard(null);
+        return;
+      }
+
+      const card = resolveCard(lastCardEl);
+      if (card) {
+        setAltHoverPos({ x: e.clientX, y: e.clientY });
+        if (altHoverCard()?.id !== card.id) setAltHoverCard(card);
+      } else if (altHoverCard()) {
+        setAltHoverCard(null);
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("keyup",   onKeyUp);
+    document.addEventListener("mousemove", onMouseMove);
+    onCleanup(() => {
+      document.removeEventListener("keydown",   onKeyDown);
+      document.removeEventListener("keyup",     onKeyUp);
+      document.removeEventListener("mousemove", onMouseMove);
+      document.body.classList.remove("alt-hover-mode");
     });
   });
 
@@ -299,6 +399,22 @@ function App(props: { pluginId?: string; isHost?: boolean; onReturnToMenu?: () =
 
       {/* Rubber-band multi-card selection */}
       <SelectionBox />
+
+      {/* Alt-hover card preview — desktop only, hidden on mobile via CSS */}
+      <Show when={altHoverCard()}>
+        {(card) => (
+          <div
+            class="card-alt-hover-preview fixed pointer-events-none z-[8500]"
+            style={{
+              left: `${altPreviewLeft()}px`,
+              top: `${altPreviewTop()}px`,
+              width: "262px",
+            }}
+          >
+            <CardVisual card={card()} horizontal={isHorizontal(card().id)} />
+          </div>
+        )}
+      </Show>
 
       {/* Card inspect — full-screen modal, scroll wheel to zoom on desktop */}
       <Show when={previewState()}>

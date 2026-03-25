@@ -50,6 +50,36 @@ export interface PluginSetting {
   defaultValue: boolean | string;
 }
 
+export interface KeyCombo {
+  /**
+   * The primary key using KeyboardEvent.key values.
+   * Use " " for Space, "Alt"/"Control"/"Shift"/"Meta" for modifier-only hover bindings.
+   */
+  key: string;
+  ctrl?: boolean;
+  alt?: boolean;
+  shift?: boolean;
+  meta?: boolean;
+}
+
+export interface KeyBindingDef {
+  id: string;
+  label: string;
+  description?: string;
+  /** Groups entries in the shortcuts UI (e.g. "Global", "Riftbound") */
+  category: string;
+  /** Plugin ID if plugin-specific; absent for global bindings */
+  pluginId?: string;
+  defaultCombo: KeyCombo;
+  /** Called when the combo is pressed. Absent for hover-modifier bindings. */
+  action?: () => void;
+  /**
+   * True for modifier-hold-while-hovering bindings.
+   * The keypress executor won't fire this; the app checks it during mousemove.
+   */
+  isHoverModifier?: boolean;
+}
+
 /** A button that appears in the game sidebar / hamburger menu. */
 export interface GameBarAction {
   label: string;
@@ -69,6 +99,8 @@ export interface Plugin {
   cardActions?: CardAction[];
   /** Settings this plugin exposes in the Settings panel. */
   settings?: PluginSetting[];
+  /** Keyboard shortcuts this plugin registers. Activated when the plugin becomes active. */
+  keyBindings?: KeyBindingDef[];
   /** Extra buttons added to the game bar sidebar and mobile hamburger menu. */
   gameBarActions?: GameBarAction[];
   /**
