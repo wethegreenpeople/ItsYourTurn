@@ -1,5 +1,5 @@
 import { createEffect, createSignal, For, Show } from "solid-js";
-import { chatMessages, sendChatMessage, type ChatMessage } from "../stores/chatStore";
+import { chatMessages, sendChatMessage, sendDiceRoll, type ChatMessage } from "../stores/chatStore";
 import { gameState, myUserId } from "../stores/gameStore";
 
 const PLAYER_COLORS = ["#c9a84c", "#7ab0d4", "#c47abd", "#7abc8f"];
@@ -97,6 +97,10 @@ export function MessagingPanel() {
   const send = () => {
     const content = draft().trim();
     if (!content) return;
+    if (content.startsWith("/r ") || content === "/r") {
+      const notation = content.slice(2).trim() || "d6";
+      if (sendDiceRoll(notation)) { setDraft(""); return; }
+    }
     sendChatMessage(content);
     setDraft("");
   };

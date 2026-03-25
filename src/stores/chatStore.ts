@@ -53,6 +53,32 @@ export function logEvent(
   broadcastChatMessage(msg);
 }
 
+export function sendDiceRoll(notation: string): boolean {
+  const match = notation.trim().match(/^(\d+)?[dD](\d+)$/);
+  if (!match) return false;
+
+  const count = Math.min(parseInt(match[1] ?? "1", 10), 100);
+  const sides = parseInt(match[2]!, 10);
+  if (count < 1 || sides < 2 || sides > 10000) return false;
+
+  const rolls = Array.from({ length: count }, () => Math.floor(Math.random() * sides) + 1);
+  const total = rolls.reduce((a, b) => a + b, 0);
+  const content = count === 1
+    ? `[dice] d${sides}: ${total}`
+    : `[dice] ${count}d${sides}: [${rolls.join(", ")}] = ${total}`;
+
+  const msg: ChatMessage = {
+    id: uuid4(),
+    type: "chat",
+    timestamp: Date.now(),
+    content,
+    fromPlayerId: myUserId,
+  };
+  receiveChat(msg);
+  broadcastChatMessage(msg);
+  return true;
+}
+
 // Register handler for incoming chat messages from other clients.
 // Runs at module init — by the time any message arrives, socket is ready.
 onChatMessage(receiveChat);
