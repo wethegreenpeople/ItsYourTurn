@@ -3,8 +3,7 @@ import type { PluginTheme } from "../../base/plugin";
 import { DropZone } from "../../../src/App";
 import { For, Show } from "solid-js";
 import { DragEventHandler } from "@thisbeyond/solid-dnd";
-import { SortableProvider } from "@thisbeyond/solid-dnd";
-import { CardComponent } from "../../../src/components/card";
+import { SnapCards } from "../../../src/utils/dnd";
 import { cardsInDeck, moveCard, moveCardAt, moveCardToTop, moveTopCard, registerDeck } from "../../../src/stores/deckStore";
 import type { Card } from "../../../src/models/Card";
 import { registerPlugin } from "../../../src/stores/pluginStore";
@@ -28,18 +27,6 @@ import { TurnPhaseTracker, advanceTurnPhase } from "../components/TurnPhaseTrack
 import { initiateResponses, responsesState } from "../utils/responsesStore";
 import { ResponsesModal } from "../components/ResponsesModal";
 import { gameState, myUserId } from "../../../src/stores/gameStore";
-
-// Renders cards in sortable snap layout, skipping cards attached to a parent
-const SnapCards = (props: { deckId: string; zone: string; horizontal?: boolean }) => {
-  const freeCards = () => cardsInDeck(props.deckId).filter(c => !getParent(c.id));
-  return (
-    <SortableProvider ids={freeCards().map(c => c.id)}>
-      <For each={freeCards()}>
-        {(card) => <CardComponent card={card} zoneId={props.zone} horizontal={props.horizontal} />}
-      </For>
-    </SortableProvider>
-  );
-};
 
 // Zone tint classes — Tailwind instead of CSS
 const zoneTint = {
@@ -70,7 +57,7 @@ const ZoneCards = (props: { deckId: string; zone: string; horizontal?: boolean }
     class="zone-cards flex flex-wrap gap-1 content-start items-start flex-1 min-h-0 p-[2px_4px_4px] overflow-y-auto overflow-x-hidden"
     classList={{ "zone-cards--empty": cardsInDeck(props.deckId).filter(c => !getParent(c.id)).length === 0 }}
   >
-    <SnapCards deckId={props.deckId} zone={props.zone} horizontal={props.horizontal} />
+    <SnapCards cards={ cardsInDeck(props.deckId).filter(c => !getParent(c.id)) } deckId={props.deckId} zone={props.zone} horizontal={props.horizontal} />
   </div>
 );
 
