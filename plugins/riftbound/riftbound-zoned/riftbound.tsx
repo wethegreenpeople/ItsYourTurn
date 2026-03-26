@@ -25,6 +25,9 @@ import { getPluginSetting, showZoneLabels } from "../../../src/stores/settingsSt
 import { openGlobalSearch } from "../utils/globalCardSearchStore";
 import { GlobalCardSearchModal } from "../components/GlobalCardSearchModal";
 import { TurnPhaseTracker, advanceTurnPhase } from "../components/TurnPhaseTracker";
+import { initiateResponses, responsesState } from "../utils/responsesStore";
+import { ResponsesModal } from "../components/ResponsesModal";
+import { gameState, myUserId } from "../../../src/stores/gameStore";
 
 // Renders cards in sortable snap layout, skipping cards attached to a parent
 const SnapCards = (props: { deckId: string; zone: string; horizontal?: boolean }) => {
@@ -202,11 +205,25 @@ export class RiftBound implements Plugin {
       icon: "⊕",
       action: openGlobalSearch,
     },
+    {
+      label: "Responses?",
+      icon: "⚡",
+      action: initiateResponses,
+      show: () =>
+        gameState.currentTurnPlayerId === myUserId &&
+        gameState.players.length > 1 &&
+        !responsesState.isActive,
+    },
   ];
 
   gameBarWidgets = [<TurnPhaseTracker />];
 
-  renderOverlays = () => <GlobalCardSearchModal />;
+  renderOverlays = () => (
+    <>
+      <GlobalCardSearchModal />
+      <ResponsesModal />
+    </>
+  );
 
   theme: PluginTheme = {
     accentColor: "#c9a84c",

@@ -85,6 +85,8 @@ export interface GameBarAction {
   label: string;
   icon: string;
   action: () => void;
+  /** If provided, the button is only rendered when this returns true. */
+  show?: () => boolean;
 }
 
 export interface Plugin {

@@ -183,10 +183,12 @@ export const GameHeader = (props: {
           <SideboardBtn showLabel />
           <For each={props.extraActions ?? []}>
             {(action) => (
-              <button class={gbarBtn} onClick={action.action}>
-                <span class={gbarIcon}>{action.icon}</span>
-                <span class={gbarLabel}>{action.label}</span>
-              </button>
+              <Show when={!action.show || action.show()}>
+                <button class={gbarBtn} onClick={action.action}>
+                  <span class={gbarIcon}>{action.icon}</span>
+                  <span class={gbarLabel}>{action.label}</span>
+                </button>
+              </Show>
             )}
           </For>
           <MsgToggleBtn showLabel />
@@ -208,10 +210,12 @@ export const GameHeader = (props: {
           <SideboardBtn onClick={() => { openDeckSearch(`${myUserId}:sideboard`, "Sideboard"); closeMenu(); }} showLabel />
           <For each={props.extraActions ?? []}>
             {(action) => (
-              <button class={gbarBtn} onClick={() => { action.action(); closeMenu(); }}>
-                <span class={gbarIcon}>{action.icon}</span>
-                <span class={gbarLabel}>{action.label}</span>
-              </button>
+              <Show when={!action.show || action.show()}>
+                <button class={gbarBtn} onClick={() => { action.action(); closeMenu(); }}>
+                  <span class={gbarIcon}>{action.icon}</span>
+                  <span class={gbarLabel}>{action.label}</span>
+                </button>
+              </Show>
             )}
           </For>
           <SettingsBtn onClick={() => { setShowSettingsModal(true); closeMenu(); }} showLabel />

@@ -25,6 +25,9 @@ import { showZoneLabels } from "../../../src/stores/settingsStore";
 import { openGlobalSearch } from "../utils/globalCardSearchStore";
 import { GlobalCardSearchModal } from "../components/GlobalCardSearchModal";
 import { TurnPhaseTracker, advanceTurnPhase } from "../components/TurnPhaseTracker";
+import { initiateResponses, responsesState } from "../utils/responsesStore";
+import { ResponsesModal } from "../components/ResponsesModal";
+import { gameState, myUserId } from "../../../src/stores/gameStore";
 
 // Renders cards freely positioned by (x%, y%), skipping cards attached to a parent.
 // Each card gets its own isolated SortableProvider so createSortable has context but no
@@ -211,11 +214,25 @@ export class RiftBoundFreePlace implements Plugin {
       icon: "⊕",
       action: openGlobalSearch,
     },
+    {
+      label: "Responses?",
+      icon: "⚡",
+      action: initiateResponses,
+      show: () =>
+        gameState.currentTurnPlayerId === myUserId &&
+        gameState.players.length > 1 &&
+        !responsesState.isActive,
+    },
   ];
 
   gameBarWidgets = [<TurnPhaseTracker />];
 
-  renderOverlays = () => <GlobalCardSearchModal />;
+  renderOverlays = () => (
+    <>
+      <GlobalCardSearchModal />
+      <ResponsesModal />
+    </>
+  );
 
   theme: PluginTheme = {
     accentColor: "#c9a84c",

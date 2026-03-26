@@ -13,6 +13,30 @@ export function broadcastChatMessage(msg: any) {
   channel?.send({ type: "broadcast", event: "chat_message", payload: msg });
 }
 
+// Response window handlers
+let _onResponseRequest: ((p: any) => void) | null = null;
+let _onResponseAnswer:  ((p: any) => void) | null = null;
+let _onResponseDone:    ((p: any) => void) | null = null;
+let _onResponseCancel:  (() => void) | null = null;
+
+export function onResponseRequest(h: (p: any) => void) { _onResponseRequest = h; }
+export function onResponseAnswer (h: (p: any) => void) { _onResponseAnswer  = h; }
+export function onResponseDone   (h: (p: any) => void) { _onResponseDone    = h; }
+export function onResponseCancel (h: () => void)        { _onResponseCancel  = h; }
+
+export function broadcastResponseRequest(payload: object) {
+  channel?.send({ type: "broadcast", event: "response_request", payload });
+}
+export function broadcastResponseAnswer(payload: object) {
+  channel?.send({ type: "broadcast", event: "response_answer", payload });
+}
+export function broadcastResponseDone(payload: object) {
+  channel?.send({ type: "broadcast", event: "response_done", payload });
+}
+export function broadcastResponseCancel() {
+  channel?.send({ type: "broadcast", event: "response_cancel", payload: {} });
+}
+
 let channel: RealtimeChannel | null = null;
 
 /**
@@ -64,6 +88,11 @@ export function joinRoom(roomCode: string, onReady?: () => void) {
       applyRemoteState(payload);
       fireReady();
     })
+
+    .on("broadcast", { event: "response_request" }, ({ payload }) => _onResponseRequest?.(payload))
+    .on("broadcast", { event: "response_answer" },  ({ payload }) => _onResponseAnswer?.(payload))
+    .on("broadcast", { event: "response_done" },    ({ payload }) => _onResponseDone?.(payload))
+    .on("broadcast", { event: "response_cancel" },  () => _onResponseCancel?.())
 
     .subscribe((status) => {
       if (status === "SUBSCRIBED") {
