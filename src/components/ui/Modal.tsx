@@ -1,4 +1,5 @@
 import { JSX, Show } from "solid-js";
+import { TbOutlineX } from "solid-icons/tb";
 import { Portal } from "solid-js/web";
 
 interface ModalProps {
@@ -45,7 +46,7 @@ export function Modal(props: ModalProps) {
                   onClick={props.onClose}
                   aria-label="Close"
                 >
-                  ✕
+                  <TbOutlineX size={14} />
                 </button>
               </div>
             </Show>

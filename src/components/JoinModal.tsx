@@ -1,4 +1,5 @@
 import { createSignal, For } from "solid-js";
+import { TbOutlineX } from "solid-icons/tb";
 
 interface JoinModalProps {
   playerName: string;
@@ -61,7 +62,7 @@ export function JoinModal(props: JoinModalProps) {
           style="color:rgba(207,219,213,.4);border:1px solid rgba(82,82,91,.7);background:transparent"
           onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(245,203,92,.45)"; e.currentTarget.style.color = "#f5cb5c"; e.currentTarget.style.background = "rgba(245,203,92,.07)"; }}
           onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(82,82,91,.7)"; e.currentTarget.style.color = "rgba(207,219,213,.4)"; e.currentTarget.style.background = "transparent"; }}
-        >✕</button>
+        ><TbOutlineX size={12} /></button>
 
         {/* Header */}
         <div class="mb-2">

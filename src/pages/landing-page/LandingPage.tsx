@@ -1,4 +1,5 @@
 import { createMemo, createSignal, For, onMount, Show } from "solid-js";
+import { TbOutlineSwords, TbOutlineKey, TbOutlineGlobe, TbOutlineSettings, TbOutlineArrowLeft } from "solid-icons/tb";
 import { type LobbyEntry } from "../../utils/lobby";
 import { savedGames, loadSavedGames, removeSavedGame } from "../../stores/savedGamesStore";
 import { PlayerSettings } from "../../components/PlayerSettings";
@@ -103,7 +104,7 @@ export function LandingPage(props: LandingPageProps) {
               class="flex items-center gap-1.5 text-text-muted/50 hover:text-text-muted transition-colors duration-150 cursor-pointer bg-transparent border-none p-0 text-[.8rem]"
               onClick={closeLobby}
             >
-              ← Back
+              <TbOutlineArrowLeft size={14} /> Back
             </button>
           </div>
           <LobbyHeader />
@@ -152,7 +153,7 @@ export function LandingPage(props: LandingPageProps) {
             <button onClick={() => setShowHost(true)}
               class="lp-action group flex items-center gap-5 px-6 py-5 text-left w-full cursor-pointer rounded-t-xl border-b-0
                      bg-surface/90 border border-rim/60">
-              <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0 bg-white/4 border border-rim/50">⚔</div>
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/4 border border-rim/50 text-text-muted/50"><TbOutlineSwords size={20} /></div>
               <div class="flex flex-col gap-0.5 flex-1">
                 <span class="font-cinzel font-semibold text-[1.05rem] leading-snug text-text">Host a Room</span>
                 <span class="text-[.8rem] text-text-muted/40">Create and invite others</span>
@@ -168,7 +169,7 @@ export function LandingPage(props: LandingPageProps) {
             <button onClick={() => setShowJoin(true)}
               class="lp-action group flex items-center gap-5 px-6 py-5 text-left w-full cursor-pointer border-t-0 border-b-0
                      bg-surface/90 border border-rim/60">
-              <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0 bg-white/4 border border-rim/50">🔮</div>
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/4 border border-rim/50 text-text-muted/50"><TbOutlineKey size={20} /></div>
               <div class="flex flex-col gap-0.5 flex-1">
                 <span class="font-cinzel font-semibold text-[1.05rem] leading-snug text-text">Join with Code</span>
                 <span class="text-[.8rem] text-text-muted/40">Enter a private room code</span>
@@ -187,7 +188,7 @@ export function LandingPage(props: LandingPageProps) {
             <button onClick={openLobby}
               class="lg:hidden lp-action group flex items-center gap-5 px-6 py-5 text-left w-full cursor-pointer border-t-0 rounded-b-xl
                      bg-surface/90 border border-rim/60">
-              <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0 bg-white/4 border border-rim/50">🌐</div>
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/4 border border-rim/50 text-text-muted/50"><TbOutlineGlobe size={20} /></div>
               <div class="flex flex-col gap-0.5 flex-1">
                 <span class="font-cinzel font-semibold text-[1.05rem] leading-snug text-text">Browse Lobby</span>
                 <span class="text-[.8rem] text-text-muted/40">Find public open games</span>
@@ -200,7 +201,7 @@ export function LandingPage(props: LandingPageProps) {
           <button onClick={() => setShowSettings(true)}
             class="lp-action group flex items-center gap-5 px-6 py-5 text-left w-full cursor-pointer rounded-t-xl rounded-b-xl border-b-0
                    bg-surface/90 border border-rim/60">
-            <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0 bg-white/4 border border-rim/50">⚙</div>
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/4 border border-rim/50 text-text-muted/50"><TbOutlineSettings size={20} /></div>
             <div class="flex flex-col gap-0.5 flex-1">
               <span class="font-cinzel font-semibold text-[1.05rem] leading-snug text-text">Settings</span>
             </div>

@@ -1,4 +1,5 @@
 import { createSignal, For, Show, type JSX } from "solid-js";
+import { TbOutlinePlayerPlay, TbOutlineMessage, TbOutlineSettings, TbOutlineCards, TbOutlineMenu2, TbOutlineArrowBackUp, TbOutlineX } from "solid-icons/tb";
 import {
   gameState,
   adjustScore,
@@ -90,7 +91,7 @@ export const GameHeader = (props: {
       style={isMyTurn() ? { animation: "end-turn-glow 2s ease-in-out infinite" } : undefined}
       onClick={endTurn}
     >
-      <span class={gbarIcon}>▷</span>
+      <span class={gbarIcon}><TbOutlinePlayerPlay size={14} /></span>
       <span class={gbarLabel}>End Turn</span>
     </button>
   );
@@ -104,7 +105,7 @@ export const GameHeader = (props: {
           classList={{ "!border-gold/45 !text-gold !bg-surface/90": gameState.showMessaging }}
           onClick={toggleMessaging}
           aria-label="Toggle chat"
-        >✉</button>
+        ><TbOutlineMessage size={14} /></button>
       }
     >
       <button
@@ -113,7 +114,7 @@ export const GameHeader = (props: {
         onClick={toggleMessaging}
         aria-label="Toggle chat"
       >
-        <span class={gbarIcon}>✉</span>
+        <span class={gbarIcon}><TbOutlineMessage size={14} /></span>
         <span class={gbarLabel}>Chat</span>
       </button>
     </Show>
@@ -125,7 +126,7 @@ export const GameHeader = (props: {
       onClick={p.onClick ?? (() => setShowSettingsModal(true))}
       title="Settings"
     >
-      <span class={gbarIcon}>⚙</span>
+      <span class={gbarIcon}><TbOutlineSettings size={14} /></span>
       <Show when={p.showLabel}>
         <span class={gbarLabel}>Settings</span>
       </Show>
@@ -139,7 +140,7 @@ export const GameHeader = (props: {
         onClick={p.onClick ?? (() => openDeckSearch(`${myUserId}:sideboard`, "Sideboard"))}
         title="View sideboard"
       >
-        <span class={gbarIcon}>⧉</span>
+        <span class={gbarIcon}><TbOutlineCards size={14} /></span>
         <Show when={p.showLabel}>
           <span class={gbarLabel}>Sideboard ({sideboardCount()})</span>
         </Show>
@@ -170,7 +171,7 @@ export const GameHeader = (props: {
             classList={{ "!border-gold/45 !text-gold": menuOpen() }}
             onClick={() => setMenuOpen(v => !v)}
             aria-label="More options"
-          >☰</button>
+          ><TbOutlineMenu2 size={16} /></button>
         </div>
 
         {/* Desktop actions */}
@@ -224,7 +225,7 @@ export const GameHeader = (props: {
               class={gbarBtn}
               onClick={() => { closeMenu(); props.onReturnToMenu!(); }}
             >
-              <span class={gbarIcon}>⤺</span>
+              <span class={gbarIcon}><TbOutlineArrowBackUp size={14} /></span>
               <span class={gbarLabel}>Return to Menu</span>
             </button>
           </Show>
@@ -233,7 +234,7 @@ export const GameHeader = (props: {
               class={`${gbarBase} hover:border-danger/50 hover:text-danger`}
               onClick={() => { closeMenu(); props.onQuitGame!(); }}
             >
-              <span class={gbarIcon}>✕</span>
+              <span class={gbarIcon}><TbOutlineX size={14} /></span>
               <span class={gbarLabel}>Quit Game</span>
             </button>
           </Show>

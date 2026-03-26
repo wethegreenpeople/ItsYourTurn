@@ -1,4 +1,5 @@
 import { createEffect, createMemo, createSignal, For, JSX, onCleanup, onMount, Show } from "solid-js";
+import { TbOutlineX } from "solid-icons/tb";
 import {
   DragDropProvider,
   DragDropSensors,
@@ -457,7 +458,7 @@ function App(props: { pluginId?: string; isHost?: boolean; onReturnToMenu?: () =
               <button
                 class="fixed top-4 right-5 z-[10001] w-10 h-10 rounded-full bg-white/10 border border-white/20 text-white/75 text-[15px] flex items-center justify-center cursor-pointer transition-[background-color,color,border-color] duration-150 hover:bg-white/20 hover:border-white/35 hover:text-white"
                 onClick={hidePreview}
-              >✕</button>
+              ><TbOutlineX size={15} /></button>
             </div>
           );
         }}

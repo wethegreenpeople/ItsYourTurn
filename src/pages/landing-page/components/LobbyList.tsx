@@ -1,5 +1,6 @@
 import { LobbyEntry } from "../../../utils/lobby";
 import { createMemo, createSignal, For, onCleanup, Show } from "solid-js";
+import { TbOutlineSwords } from "solid-icons/tb";
 
  export const LobbyList = (props: { availableGames: LobbyEntry[], onJoinRequest: (game: LobbyEntry) => void }) => (
    <div class="flex flex-col gap-2.5">
@@ -7,7 +8,7 @@ import { createMemo, createSignal, For, onCleanup, Show } from "solid-js";
        when={props.availableGames.length > 0}
        fallback={
          <div class="flex flex-col items-center gap-3 py-10 rounded-xl bg-surface/70 border border-dashed border-rim/50">
-           <span class="text-[2rem] opacity-20">🏟</span>
+           <span class="opacity-20"><TbOutlineSwords size={32} /></span>
            <p class="text-[.82rem] m-0 text-text-muted/30">No public games right now</p>
            <p class="text-[.72rem] m-0 text-text-muted/20">Host one to get started!</p>
          </div>
@@ -18,7 +19,7 @@ import { createMemo, createSignal, For, onCleanup, Show } from "solid-js";
            <div class="flex items-center gap-3.5 px-4 py-3.5 rounded-[10px] bg-surface/90 border border-rim/60
                        transition-[border-color] duration-150 hover:border-text-muted/30">
              <div class="w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center text-[1.1rem]
-                         bg-white/4 border border-rim/50">⚔</div>
+                         bg-white/4 border border-rim/50 text-text-muted/50"><TbOutlineSwords size={20} /></div>
              <div class="flex flex-col gap-1 flex-1 min-w-0">
                <span class="font-cinzel font-semibold text-sm text-text tracking-wide">{game.gameType}</span>
                <div class="flex items-center gap-2 flex-wrap">

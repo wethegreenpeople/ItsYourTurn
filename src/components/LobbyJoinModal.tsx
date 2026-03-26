@@ -1,4 +1,5 @@
 import { createSignal } from "solid-js";
+import { TbOutlineX, TbOutlineSwords } from "solid-icons/tb";
 import type { LobbyEntry } from "../utils/lobby";
 
 interface LobbyJoinModalProps {
@@ -42,7 +43,7 @@ export function LobbyJoinModal(props: LobbyJoinModalProps) {
           style="color:rgba(207,219,213,.4);border:1px solid rgba(82,82,91,.7);background:transparent"
           onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(245,203,92,.45)"; e.currentTarget.style.color = "#f5cb5c"; e.currentTarget.style.background = "rgba(245,203,92,.07)"; }}
           onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(82,82,91,.7)"; e.currentTarget.style.color = "rgba(207,219,213,.4)"; e.currentTarget.style.background = "transparent"; }}
-        >✕</button>
+        ><TbOutlineX size={12} /></button>
 
         {/* Header */}
         <div class="mb-6">
@@ -56,7 +57,7 @@ export function LobbyJoinModal(props: LobbyJoinModalProps) {
         <div class="flex items-center gap-3 px-4 py-3 rounded-[10px] mb-7"
              style="background:rgba(245,203,92,.05);border:1px solid rgba(245,203,92,.15)">
           <div class="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-base
-                      bg-white/4 border border-rim/50">⚔</div>
+                      bg-white/4 border border-rim/50 text-text-muted/50"><TbOutlineSwords size={18} /></div>
           <div class="flex flex-col gap-0.5 flex-1 min-w-0">
             <span class="font-cinzel font-semibold text-[.82rem] text-text tracking-wide">{props.game.gameType}</span>
             <span class="text-[.68rem]" style="color:rgba(207,219,213,.35)">

@@ -1,4 +1,5 @@
 import { createSignal, For } from "solid-js";
+import { TbOutlineX, TbOutlineLock, TbOutlineGlobe } from "solid-icons/tb";
 
 interface PluginInfo {
   id: string;
@@ -60,7 +61,7 @@ export function HostModal(props: HostModalProps) {
           style="color:rgba(207,219,213,.4);border:1px solid rgba(82,82,91,.7);background:transparent"
           onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(245,203,92,.45)"; e.currentTarget.style.color = "#f5cb5c"; e.currentTarget.style.background = "rgba(245,203,92,.07)"; }}
           onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(82,82,91,.7)"; e.currentTarget.style.color = "rgba(207,219,213,.4)"; e.currentTarget.style.background = "transparent"; }}
-        >✕</button>
+        ><TbOutlineX size={12} /></button>
 
         {/* Header */}
         <div class="mb-6">
@@ -92,7 +93,7 @@ export function HostModal(props: HostModalProps) {
                 "bg-transparent text-text-muted/30 hover:text-text-muted/55": isPublic(),
               }}
               onClick={() => setIsPublic(false)}
-            >🔒 Private</button>
+            ><TbOutlineLock size={13} /> Private</button>
             <button
               class="flex-1 py-2 px-3 rounded-[7px] border-none cursor-pointer font-semibold text-[.85rem] tracking-wide transition-all duration-200"
               classList={{
@@ -100,7 +101,7 @@ export function HostModal(props: HostModalProps) {
                 "bg-transparent text-text-muted/30 hover:text-text-muted/55": !isPublic(),
               }}
               onClick={() => setIsPublic(true)}
-            >🌐 Public</button>
+            ><TbOutlineGlobe size={13} /> Public</button>
           </div>
           <p class="text-[.72rem] mt-2 m-0" style="color:rgba(207,219,213,.3)">
             {isPublic() ? "Visible in the lobby — anyone can join" : "Only joinable with the room code below"}

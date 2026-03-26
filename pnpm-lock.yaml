@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@boxicons/react':
+        specifier: ^1.0.3
+        version: 1.0.3(react@19.2.4)
       '@supabase/supabase-js':
         specifier: ^2.99.3
         version: 2.99.3
@@ -38,6 +41,9 @@ importers:
       http-proxy-middleware:
         specifier: ^3.0.5
         version: 3.0.5
+      solid-icons:
+        specifier: ^1.2.0
+        version: 1.2.0(solid-js@1.9.11)
       solid-js:
         specifier: ^1.9.3
         version: 1.9.11
@@ -140,6 +146,11 @@ packages:
   '@babel/types@7.29.0':
     resolution: {integrity: sha512-LwdZHpScM4Qz8Xw2iKSzS+cfglZzJGvofQICy7W7v4caru4EaAmyUuO6BGrbyQ2mYV11W0U8j5mBhd14dd3B0A==}
     engines: {node: '>=6.9.0'}
+
+  '@boxicons/react@1.0.3':
+    resolution: {integrity: sha512-NASJNbk4X6Xi24CIa/Anx7KhMH1KPiBuaq0RJq3HJiFg65Ct9mhIB6j/a/Ciz/ZOTGaGzisWYmbU4jdKKK/YYA==}
+    peerDependencies:
+      react: '>=16.8.0'
 
   '@esbuild/aix-ppc64@0.25.12':
     resolution: {integrity: sha512-Hhmwd6CInZ3dwpuGTF8fJG6yoWmsToE+vYgD4nytZVxcu1ulHpUQRAB1UJ8+N1Am3Mz4+xOByoQoSZf4D+CpkA==}
@@ -1128,6 +1139,10 @@ packages:
     resolution: {integrity: sha512-K5zQjDllxWkf7Z5xJdV0/B0WTNqx6vxG70zJE4N0kBs4LovmEYWJzQGxC9bS9RAKu3bgM40lrd5zoLJ12MQ5BA==}
     engines: {node: '>= 0.10'}
 
+  react@19.2.4:
+    resolution: {integrity: sha512-9nfp2hYpCwOjAN+8TZFGhtWEwgvWHXqESH8qT89AT/lWklpLON22Lc8pEtnpsZz7VmawabSU0gCjnj8aC0euHQ==}
+    engines: {node: '>=0.10.0'}
+
   requires-port@1.0.0:
     resolution: {integrity: sha512-KigOCHcocU3XODJxsu8i/j8T9tzT4adHiecwORRQ0ZZFcp7ahwXuRU1m+yuO90C5ZUyGeGfocHDI14M3L3yDAQ==}
 
@@ -1183,6 +1198,11 @@ packages:
   side-channel@1.1.0:
     resolution: {integrity: sha512-ZX99e6tRweoUXqR+VBrslhda51Nh5MTQwou5tnUDgbtyM0dBgmhEDtWGP/xbKn6hqfPRHujUNwz5fy/wbbhnpw==}
     engines: {node: '>= 0.4'}
+
+  solid-icons@1.2.0:
+    resolution: {integrity: sha512-yjQxWQMi9l19P5Af9vjsvalTMDFPDL4XD6etrUdNxNVhFp1bMYF0SFwUa5VYDfJ7u0SF3Qkz/F7BZxqcLUwklw==}
+    peerDependencies:
+      solid-js: '*'
 
   solid-js@1.9.11:
     resolution: {integrity: sha512-WEJtcc5mkh/BnHA6Yrg4whlF8g6QwpmXXRg4P2ztPmcKeHHlH4+djYecBLhSpecZY2RRECXYUwIc/C2r3yzQ4Q==}
@@ -1436,6 +1456,10 @@ snapshots:
     dependencies:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
+
+  '@boxicons/react@1.0.3(react@19.2.4)':
+    dependencies:
+      react: 19.2.4
 
   '@esbuild/aix-ppc64@0.25.12':
     optional: true
@@ -2258,6 +2282,8 @@ snapshots:
       iconv-lite: 0.7.2
       unpipe: 1.0.0
 
+  react@19.2.4: {}
+
   requires-port@1.0.0: {}
 
   rollup@4.59.0:
@@ -2365,6 +2391,10 @@ snapshots:
       side-channel-list: 1.0.0
       side-channel-map: 1.0.1
       side-channel-weakmap: 1.0.2
+
+  solid-icons@1.2.0(solid-js@1.9.11):
+    dependencies:
+      solid-js: 1.9.11
 
   solid-js@1.9.11:
     dependencies:

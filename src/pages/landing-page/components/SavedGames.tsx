@@ -1,4 +1,5 @@
 import { For } from "solid-js";
+import { TbOutlineX } from "solid-icons/tb";
 import { SavedGame } from "../../../stores/savedGamesStore";
 
 export const SavedGamesList = (props: { savedGames: SavedGame[], onJoinGame: (roomCode: string, myPlayerName: string) => void, removeSavedGame: (roomCode: string) => void }) => (
@@ -25,7 +26,7 @@ export const SavedGamesList = (props: { savedGames: SavedGame[], onJoinGame: (ro
                      text-text-muted/20 cursor-pointer text-[.65rem] flex-shrink-0
                      transition-colors duration-150 hover:text-danger/65 hover:bg-danger/8"
               onClick={() => props.removeSavedGame(game.roomCode)} title="Remove"
-            >✕</button>
+            ><TbOutlineX size={12} /></button>
           </div>
         )}
       </For>

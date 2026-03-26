@@ -28,7 +28,6 @@ import { initiateResponses, responsesState } from "../utils/responsesStore";
 import { ResponsesModal } from "../components/ResponsesModal";
 import { gameState, myUserId } from "../../../src/stores/gameStore";
 
-// Zone tint classes — Tailwind instead of CSS
 const zoneTint = {
   battlefield: "bg-surface/97 border-rim shadow-[inset_0_1px_0_rgba(245,203,92,.08)]",
   base:        "bg-[rgba(35,35,39,.95)] border-rim shadow-[inset_0_1px_0_rgba(255,255,255,.04)]",

@@ -6,6 +6,7 @@ import { render } from "solid-js/web";
 import { createSignal, Show } from "solid-js";
 import App from "./App";
 import { LandingPage } from "./pages/landing-page/LandingPage";
+import { HomePage } from "./pages/home/HomePage";
 import { joinRoom, requestJoin, leaveRoom, broadcastPlayerLeave } from "./utils/socket";
 import { addPlayer, myUserId, setCurrentPlayer, gameState, resetGameState } from "./stores/gameStore";
 import { upsertSavedGame, removeSavedGame } from "./stores/savedGamesStore";
@@ -173,4 +174,16 @@ function Root() {
   );
 }
 
-render(() => <Root />, document.getElementById("root") as HTMLElement);
+function AppRouter() {
+  // In Tauri (desktop app), always show the game app directly.
+  // On web, show the marketing homepage at "/" and the game at "/app".
+  const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+  const isAppRoute = typeof window !== "undefined" && window.location.pathname.startsWith("/app");
+
+  if (isTauri || isAppRoute) {
+    return <Root />;
+  }
+  return <HomePage />;
+}
+
+render(() => <AppRouter />, document.getElementById("root") as HTMLElement);

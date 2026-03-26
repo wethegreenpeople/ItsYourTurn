@@ -1,4 +1,5 @@
 import { createEffect, createSignal, For, onCleanup, Show } from "solid-js";
+import { TbOutlinePencil, TbOutlineRefresh, TbOutlineX } from "solid-icons/tb";
 import { getActivePlugin } from "../stores/pluginStore";
 import {
   showSettingsModal, setShowSettingsModal,
@@ -210,7 +211,7 @@ const KeyboardShortcutsSection = () => {
                             onClick={() => setListeningId(def.id)}
                             title="Remap shortcut"
                           >
-                            ✎
+                            <TbOutlinePencil size={13} />
                           </button>
                           <Show when={isBindingOverridden(def.id)}>
                             <button
@@ -218,7 +219,7 @@ const KeyboardShortcutsSection = () => {
                               onClick={() => setComboOverride(def.id, null)}
                               title="Reset to default"
                             >
-                              ↺
+                              <TbOutlineRefresh size={13} />
                             </button>
                           </Show>
                         </>
@@ -232,7 +233,7 @@ const KeyboardShortcutsSection = () => {
                         onClick={() => setListeningId(null)}
                         title="Cancel"
                       >
-                        ✕
+                        <TbOutlineX size={12} />
                       </button>
                     </Show>
                   </div>
@@ -274,7 +275,7 @@ export const SettingsModal = () => {
               onClick={() => setShowSettingsModal(false)}
               aria-label="Close settings"
             >
-              ✕
+              <TbOutlineX size={16} />
             </button>
           </div>
 

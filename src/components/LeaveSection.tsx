@@ -1,4 +1,5 @@
 import { createSignal, Show } from "solid-js";
+import { TbOutlineArrowBackUp, TbOutlineX, TbOutlineArrowBack } from "solid-icons/tb";
 
 interface LeaveSectionProps {
   onReturnToMenu?: () => void;
@@ -22,7 +23,7 @@ export function LeaveSection(props: LeaveSectionProps) {
             onClick={() => setShowMenu(true)}
             title="Leave game options"
           >
-            <span class={icon}>⤺</span>
+            <span class={icon}><TbOutlineArrowBackUp size={14} /></span>
             <span class={lbl}>Leave</span>
           </button>
         }
@@ -34,7 +35,7 @@ export function LeaveSection(props: LeaveSectionProps) {
               onClick={() => { setShowMenu(false); props.onReturnToMenu!(); }}
               title="Return to menu (you stay in the game)"
             >
-              <span class={icon}>⤺</span>
+              <span class={icon}><TbOutlineArrowBackUp size={14} /></span>
               <span class={lbl}>Menu</span>
             </button>
           </Show>
@@ -44,7 +45,7 @@ export function LeaveSection(props: LeaveSectionProps) {
               onClick={() => { setShowMenu(false); props.onQuitGame!(); }}
               title="Quit game (removes you from the game)"
             >
-              <span class={icon}>✕</span>
+              <span class={icon}><TbOutlineX size={14} /></span>
               <span class={lbl}>Quit</span>
             </button>
           </Show>
@@ -52,7 +53,7 @@ export function LeaveSection(props: LeaveSectionProps) {
             class={`${btn} text-text-muted/45 hover:border-raised hover:text-text-muted/75`}
             onClick={() => setShowMenu(false)}
           >
-            <span class={icon}>↩</span>
+            <span class={icon}><TbOutlineArrowBack size={14} /></span>
             <span class={lbl}>Back</span>
           </button>
         </div>
